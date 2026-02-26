@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayControl — Трекер личных платежей</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="logo-wrap">
+        <div class="logo-mark">₽</div>
+        <div class="logo-text">
+          <span class="logo-title">PayControl</span>
+          <span class="logo-subtitle">Трекер личных платежей</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" id="themeToggle" type="button">Тёмная тема</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <section class="dashboard">
+        <div class="card kpi-card">
+          <div class="card-header">
+            <span class="card-title">Сумма платежей / месяц</span>
+          </div>
+          <div class="card-value" id="totalMonthly">0 ₽</div>
+        </div>
+
+        <div class="card kpi-card">
+          <div class="card-header">
+            <span class="card-title">Ближайший платёж</span>
+          </div>
+          <div class="card-value" id="nextPayment">—</div>
+          <div class="card-meta" id="nextPaymentMeta">Дата и сумма появятся здесь</div>
+        </div>
+
+        <div class="card kpi-card">
+          <div class="card-header">
+            <span class="card-title">Активные обязательства</span>
+          </div>
+          <div class="tags">
+            <span class="tag">Подписки: <span id="countSubscription">0</span></span>
+            <span class="tag">ЖКХ: <span id="countUtilities">0</span></span>
+            <span class="tag">Кредиты: <span id="countCredit">0</span></span>
+            <span class="tag">Другое: <span id="countOther">0</span></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="layout-two-column">
+        <section class="card form-card">
+          <div class="card-header">
+            <span class="card-title">Добавить новый платёж</span>
+          </div>
+          <form id="paymentForm" class="form">
+            <div class="form-row">
+              <label for="name">Название</label>
+              <input id="name" name="name" type="text" placeholder="Например, Spotify, аренда" required />
+            </div>
+
+            <div class="form-row">
+              <label for="amount">Сумма, ₽</label>
+              <input id="amount" name="amount" type="number" min="0" step="0.01" placeholder="0.00" required />
+            </div>
+
+            <div class="form-row">
+              <label for="date">Дата списания</label>
+              <input id="date" name="date" type="date" required />
+            </div>
+
+            <div class="form-row">
+              <label for="category">Категория</label>
+              <select id="category" name="category" required>
+                <option value="subscription">Подписка</option>
+                <option value="utilities">ЖКХ</option>
+                <option value="credit">Кредит</option>
+                <option value="other">Другое</option>
+              </select>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Добавить платёж</button>
+              <button class="btn btn-ghost" type="reset">Очистить</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="card table-card">
+          <div class="card-header table-header">
+            <span class="card-title">Список платежей</span>
+            <div class="table-actions">
+              <input
+                type="search"
+                id="searchInput"
+                class="search-input"
+                placeholder="Поиск по названию или категории..."
+              />
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="payments-table">
+              <thead>
+                <tr>
+                  <th>Название</th>
+                  <th>Сумма</th>
+                  <th>Дата</th>
+                  <th>Категория</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="paymentsBody">
+                <!-- Записи будут добавляться скриптом -->
+              </tbody>
+            </table>
+            <div class="table-empty" id="tableEmptyState">
+              Платежей пока нет. Добавьте первый с помощью формы слева.
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>PayControl © <span id="currentYear"></span></span>
+      <span class="footer-hint">Ваши данные хранятся только в этом браузере</span>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const form = document.getElementById('paymentForm');
+      const paymentsBody = document.getElementById('paymentsBody');
+      const tableEmptyState = document.getElementById('tableEmptyState');
+      const totalMonthlyEl = document.getElementById('totalMonthly');
+      const nextPaymentEl = document.getElementById('nextPayment');
+      const nextPaymentMetaEl = document.getElementById('nextPaymentMeta');
+      const searchInput = document.getElementById('searchInput');
+
+      const countSubscriptionEl = document.getElementById('countSubscription');
+      const countUtilitiesEl = document.getElementById('countUtilities');
+      const countCreditEl = document.getElementById('countCredit');
+      const countOtherEl = document.getElementById('countOther');
+
+      const currentYearEl = document.getElementById('currentYear');
+      const themeToggleBtn = document.getElementById('themeToggle');
+
+      let payments = [];
+      let currentEditingId = null;
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+
+      function formatCurrency(value) {
+        const number = Number(value) || 0;
+        return number.toLocaleString('ru-RU', {
+          style: 'currency',
+          currency: 'RUB'
+        });
+      }
+
+      function formatDate(dateStr) {
+        const date = new Date(dateStr);
+        if (Number.isNaN(date.getTime())) return '—';
+        return date.toLocaleDateString('ru-RU', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      }
+
+      function updateDashboard() {
+        const now = new Date();
+
+        const total = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+        totalMonthlyEl.textContent = formatCurrency(total);
+
+        const futurePayments = payments
+          .map((p) => ({ ...p, dateObj: new Date(p.date) }))
+          .filter((p) => !Number.isNaN(p.dateObj.getTime()) && p.dateObj >= now)
+          .sort((a, b) => a.dateObj - b.dateObj);
+
+        if (futurePayments.length === 0) {
+          nextPaymentEl.textContent = '—';
+          nextPaymentMetaEl.textContent = 'Ближайших платежей нет';
+        } else {
+          const next = futurePayments[0];
+          nextPaymentEl.textContent = `${formatCurrency(next.amount)}`;
+          nextPaymentMetaEl.textContent = `${next.name} — ${formatDate(next.date)}`;
+        }
+
+        const counts = {
+          subscription: 0,
+          utilities: 0,
+          credit: 0,
+          other: 0
+        };
+
+        payments.forEach((p) => {
+          if (counts[p.category] !== undefined) {
+            counts[p.category] += 1;
+          }
+        });
+
+        countSubscriptionEl.textContent = counts.subscription;
+        countUtilitiesEl.textContent = counts.utilities;
+        countCreditEl.textContent = counts.credit;
+        countOtherEl.textContent = counts.other;
+      }
+
+      function renderTable(filterValue) {
+        paymentsBody.innerHTML = '';
+
+        const normalizedFilter = (filterValue || '').trim().toLowerCase();
+        const filtered = normalizedFilter
+          ? payments.filter((p) => {
+              const text = (p.name + ' ' + p.categoryLabel).toLowerCase();
+              return text.includes(normalizedFilter);
+            })
+          : payments;
+
+        if (filtered.length === 0) {
+          tableEmptyState.style.display = 'flex';
+          return;
+        }
+
+        tableEmptyState.style.display = 'none';
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        filtered
+          .sort((a, b) => new Date(a.date) - new Date(b.date))
+          .forEach((payment) => {
+            const tr = document.createElement('tr');
+
+            const dueDate = new Date(payment.date);
+            dueDate.setHours(0, 0, 0, 0);
+            const msDiff = dueDate.getTime() - today.getTime();
+            const daysDiff = msDiff / (1000 * 60 * 60 * 24);
+
+            if (daysDiff >= 0 && daysDiff <= 3) {
+              tr.classList.add('row-warning');
+            }
+
+            const nameTd = document.createElement('td');
+            const nameText = document.createElement('span');
+            nameText.textContent = payment.name;
+            nameTd.appendChild(nameText);
+
+            const amountTd = document.createElement('td');
+            amountTd.textContent = formatCurrency(payment.amount);
+
+            const dateTd = document.createElement('td');
+            dateTd.textContent = formatDate(payment.date);
+
+            const categoryTd = document.createElement('td');
+            categoryTd.textContent = payment.categoryLabel;
+
+            const actionsTd = document.createElement('td');
+            actionsTd.className = 'table-actions-cell';
+
+            const editBtn = document.createElement('button');
+            editBtn.type = 'button';
+            editBtn.className = 'icon-btn icon-btn-edit';
+            editBtn.title = 'Редактировать платёж';
+            editBtn.textContent = '✏️';
+            editBtn.addEventListener('click', () => {
+              currentEditingId = payment.id;
+              form.name.value = payment.name;
+              form.amount.value = payment.amount;
+              form.date.value = payment.date;
+              form.category.value = payment.category;
+              submitBtn.textContent = 'Сохранить изменения';
+              form.name.focus();
+            });
+
+            const paidBtn = document.createElement('button');
+            paidBtn.type = 'button';
+            paidBtn.className = 'icon-btn icon-btn-success';
+            paidBtn.title = 'Отметить как оплачено и перенести дату';
+            paidBtn.textContent = '✔';
+            paidBtn.addEventListener('click', () => {
+              const target = payments.find((p) => p.id === payment.id);
+              if (!target) return;
+
+              const currentDate = new Date(target.date);
+              if (Number.isNaN(currentDate.getTime())) return;
+
+              const nextMonthDate = new Date(currentDate);
+              nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+
+              const year = nextMonthDate.getFullYear();
+              const month = String(nextMonthDate.getMonth() + 1).padStart(2, '0');
+              const day = String(nextMonthDate.getDate()).padStart(2, '0');
+
+              target.date = `${year}-${month}-${day}`;
+
+              savePayments();
+              updateDashboard();
+              renderTable(searchInput.value);
+            });
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'icon-btn icon-btn-danger';
+            deleteBtn.innerHTML = '&times;';
+            deleteBtn.title = 'Удалить платёж';
+            deleteBtn.addEventListener('click', () => {
+              payments = payments.filter((p) => p.id !== payment.id);
+              savePayments();
+              updateDashboard();
+              renderTable(searchInput.value);
+            });
+
+            actionsTd.appendChild(editBtn);
+            actionsTd.appendChild(paidBtn);
+            actionsTd.appendChild(deleteBtn);
+
+            tr.appendChild(nameTd);
+            tr.appendChild(amountTd);
+            tr.appendChild(dateTd);
+            tr.appendChild(categoryTd);
+            tr.appendChild(actionsTd);
+
+            paymentsBody.appendChild(tr);
+          });
+      }
+
+      function savePayments() {
+        try {
+          localStorage.setItem('paycontrol_payments', JSON.stringify(payments));
+        } catch (e) {
+          console.warn('Не удалось сохранить данные в localStorage', e);
+        }
+      }
+
+      function loadPayments() {
+        try {
+          const raw = localStorage.getItem('paycontrol_payments');
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            payments = parsed;
+          }
+        } catch (e) {
+          console.warn('Не удалось загрузить данные из localStorage', e);
+        }
+      }
+
+      function categoryLabel(value) {
+        switch (value) {
+          case 'subscription':
+            return 'Подписка';
+          case 'utilities':
+            return 'ЖКХ';
+          case 'credit':
+            return 'Кредит';
+          default:
+            return 'Другое';
+        }
+      }
+
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(form);
+        const name = String(formData.get('name') || '').trim();
+        const amount = Number(formData.get('amount') || 0);
+        const date = String(formData.get('date') || '');
+        const category = String(formData.get('category') || 'other');
+
+        if (!name || !date || !amount || amount <= 0) {
+          alert('Проверьте корректность введённых данных.');
+          return;
+        }
+
+        if (currentEditingId) {
+          const existing = payments.find((p) => p.id === currentEditingId);
+          if (existing) {
+            existing.name = name;
+            existing.amount = amount;
+            existing.date = date;
+            existing.category = category;
+            existing.categoryLabel = categoryLabel(category);
+          }
+          currentEditingId = null;
+          submitBtn.textContent = 'Добавить платёж';
+        } else {
+          const payment = {
+            id: Date.now().toString(),
+            name,
+            amount,
+            date,
+            category,
+            categoryLabel: categoryLabel(category)
+          };
+
+          payments.push(payment);
+        }
+
+        savePayments();
+        updateDashboard();
+        renderTable(searchInput.value);
+
+        form.reset();
+      });
+
+      form.addEventListener('reset', () => {
+        currentEditingId = null;
+        submitBtn.textContent = 'Добавить платёж';
+      });
+
+      searchInput.addEventListener('input', () => {
+        renderTable(searchInput.value);
+      });
+
+      function initTheme() {
+        const stored = localStorage.getItem('paycontrol_theme');
+        const prefersDark = window.matchMedia &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        const theme = stored || (prefersDark ? 'dark' : 'dark');
+        document.documentElement.setAttribute('data-theme', theme);
+        themeToggleBtn.textContent = theme === 'dark' ? 'Тёмная тема' : 'Светлая тема';
+      }
+
+      themeToggleBtn.addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        themeToggleBtn.textContent = next === 'dark' ? 'Тёмная тема' : 'Светлая тема';
+        try {
+          localStorage.setItem('paycontrol_theme', next);
+        } catch (e) {
+          console.warn('Не удалось сохранить тему', e);
+        }
+      });
+
+      function init() {
+        currentYearEl.textContent = new Date().getFullYear();
+        initTheme();
+        loadPayments();
+        updateDashboard();
+        renderTable('');
+      }
+
+      document.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</body>
+</html>
+
