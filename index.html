@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PayControl — Трекер личных платежей</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="app">
@@ -56,7 +57,7 @@
           <div class="card-header">
             <span class="card-title">Добавить новый платёж</span>
           </div>
-          <form id="paymentForm" class="form">
+          <form id="paymentForm" class="form" method="post" onsubmit="return false;">
             <div class="form-row">
               <label for="name">Название</label>
               <input id="name" name="name" type="text" placeholder="Например, Spotify, аренда" required />
@@ -133,6 +134,11 @@
 
   <script>
     (function () {
+      // Инициализация Supabase
+      const supabaseUrl = 'https://dlhmcrmwndlwzaaogyoy.supabase.co';
+      const supabaseKey = 'sb_publishable_h6w08Q0zo8C1ZRRU0xX5lQ_zN7wJnOF';
+      const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
       const form = document.getElementById('paymentForm');
       const paymentsBody = document.getElementById('paymentsBody');
       const tableEmptyState = document.getElementById('tableEmptyState');
@@ -154,6 +160,59 @@
 
       const submitBtn = form.querySelector('button[type="submit"]');
 
+      // Обработчик отправки формы
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault(); // Предотвращаем стандартную отправку формы
+
+        const formData = new FormData(form);
+        const name = String(formData.get('name') || '').trim();
+        const amount = Number(formData.get('amount') || 0);
+        const date = String(formData.get('date') || '');
+        const category = String(formData.get('category') || 'other');
+
+        if (!name || !date || !amount || amount <= 0) {
+          alert('Проверьте корректность введённых данных.');
+          return;
+        }
+
+        if (currentEditingId) {
+          const updatedPayment = await updatePayment(currentEditingId, {
+            name,
+            amount,
+            date,
+            category
+          });
+
+          if (updatedPayment) {
+            currentEditingId = null;
+            submitBtn.textContent = 'Добавить платёж';
+            await loadPayments();
+          }
+        } else {
+          const newPayment = await savePayment({
+            name,
+            amount,
+            date,
+            category
+          });
+
+          if (newPayment) {
+            await loadPayments();
+          }
+        }
+
+        form.reset();
+      });
+
+      form.addEventListener('reset', () => {
+        currentEditingId = null;
+        submitBtn.textContent = 'Добавить платёж';
+      });
+
+      searchInput.addEventListener('input', () => {
+        renderTable(searchInput.value);
+      });
+
       function formatCurrency(value) {
         const number = Number(value) || 0;
         return number.toLocaleString('ru-RU', {
@@ -170,6 +229,109 @@
           month: '2-digit',
           year: 'numeric'
         });
+      }
+
+      async function loadPayments() {
+        try {
+          const { data, error } = await supabase
+            .from('payments')
+            .select('*')
+            .order('payment_date', { ascending: true });
+
+          if (error) {
+            console.error('Ошибка загрузки платежей:', error);
+            return;
+          }
+
+          payments = data.map(payment => ({
+            id: payment.id.toString(),
+            name: payment.name,
+            amount: payment.amount,
+            date: payment.payment_date,
+            category: payment.category,
+            categoryLabel: categoryLabel(payment.category)
+          }));
+
+          updateDashboard();
+          renderTable('');
+        } catch (e) {
+          console.error('Ошибка при загрузке данных:', e);
+        }
+      }
+
+      async function savePayment(paymentData) {
+        try {
+          console.log('Сохранение платежа:', paymentData);
+          
+          const { data, error } = await supabase
+            .from('payments')
+            .insert([{
+              name: paymentData.name,
+              amount: paymentData.amount,
+              payment_date: paymentData.date,
+              category: paymentData.category
+            }])
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Ошибка сохранения платежа:', error);
+            alert('Ошибка сохранения: ' + error.message);
+            return null;
+          }
+
+          console.log('Платеж успешно сохранен:', data);
+          return data;
+        } catch (e) {
+          console.error('Ошибка при сохранении:', e);
+          alert('Ошибка при сохранении: ' + e.message);
+          return null;
+        }
+      }
+
+      async function updatePayment(id, paymentData) {
+        try {
+          const { data, error } = await supabase
+            .from('payments')
+            .update({
+              name: paymentData.name,
+              amount: paymentData.amount,
+              payment_date: paymentData.date,
+              category: paymentData.category
+            })
+            .eq('id', parseInt(id))
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Ошибка обновления платежа:', error);
+            return null;
+          }
+
+          return data;
+        } catch (e) {
+          console.error('Ошибка при обновлении:', e);
+          return null;
+        }
+      }
+
+      async function deletePayment(id) {
+        try {
+          const { error } = await supabase
+            .from('payments')
+            .delete()
+            .eq('id', parseInt(id));
+
+          if (error) {
+            console.error('Ошибка удаления платежа:', error);
+            return false;
+          }
+
+          return true;
+        } catch (e) {
+          console.error('Ошибка при удалении:', e);
+          return false;
+        }
       }
 
       function updateDashboard() {
@@ -268,7 +430,7 @@
             editBtn.className = 'icon-btn icon-btn-edit';
             editBtn.title = 'Редактировать платёж';
             editBtn.textContent = '✏️';
-            editBtn.addEventListener('click', () => {
+            editBtn.addEventListener('click', async () => {
               currentEditingId = payment.id;
               form.name.value = payment.name;
               form.amount.value = payment.amount;
@@ -283,11 +445,8 @@
             paidBtn.className = 'icon-btn icon-btn-success';
             paidBtn.title = 'Отметить как оплачено и перенести дату';
             paidBtn.textContent = '✔';
-            paidBtn.addEventListener('click', () => {
-              const target = payments.find((p) => p.id === payment.id);
-              if (!target) return;
-
-              const currentDate = new Date(target.date);
+            paidBtn.addEventListener('click', async () => {
+              const currentDate = new Date(payment.date);
               if (Number.isNaN(currentDate.getTime())) return;
 
               const nextMonthDate = new Date(currentDate);
@@ -297,11 +456,16 @@
               const month = String(nextMonthDate.getMonth() + 1).padStart(2, '0');
               const day = String(nextMonthDate.getDate()).padStart(2, '0');
 
-              target.date = `${year}-${month}-${day}`;
+              const updatedPayment = await updatePayment(payment.id, {
+                name: payment.name,
+                amount: payment.amount,
+                date: `${year}-${month}-${day}`,
+                category: payment.category
+              });
 
-              savePayments();
-              updateDashboard();
-              renderTable(searchInput.value);
+              if (updatedPayment) {
+                await loadPayments();
+              }
             });
 
             const deleteBtn = document.createElement('button');
@@ -309,11 +473,11 @@
             deleteBtn.className = 'icon-btn icon-btn-danger';
             deleteBtn.innerHTML = '&times;';
             deleteBtn.title = 'Удалить платёж';
-            deleteBtn.addEventListener('click', () => {
-              payments = payments.filter((p) => p.id !== payment.id);
-              savePayments();
-              updateDashboard();
-              renderTable(searchInput.value);
+            deleteBtn.addEventListener('click', async () => {
+              const success = await deletePayment(payment.id);
+              if (success) {
+                await loadPayments();
+              }
             });
 
             actionsTd.appendChild(editBtn);
@@ -330,27 +494,6 @@
           });
       }
 
-      function savePayments() {
-        try {
-          localStorage.setItem('paycontrol_payments', JSON.stringify(payments));
-        } catch (e) {
-          console.warn('Не удалось сохранить данные в localStorage', e);
-        }
-      }
-
-      function loadPayments() {
-        try {
-          const raw = localStorage.getItem('paycontrol_payments');
-          if (!raw) return;
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed)) {
-            payments = parsed;
-          }
-        } catch (e) {
-          console.warn('Не удалось загрузить данные из localStorage', e);
-        }
-      }
-
       function categoryLabel(value) {
         switch (value) {
           case 'subscription':
@@ -363,60 +506,6 @@
             return 'Другое';
         }
       }
-
-      form.addEventListener('submit', (event) => {
-        event.preventDefault();
-
-        const formData = new FormData(form);
-        const name = String(formData.get('name') || '').trim();
-        const amount = Number(formData.get('amount') || 0);
-        const date = String(formData.get('date') || '');
-        const category = String(formData.get('category') || 'other');
-
-        if (!name || !date || !amount || amount <= 0) {
-          alert('Проверьте корректность введённых данных.');
-          return;
-        }
-
-        if (currentEditingId) {
-          const existing = payments.find((p) => p.id === currentEditingId);
-          if (existing) {
-            existing.name = name;
-            existing.amount = amount;
-            existing.date = date;
-            existing.category = category;
-            existing.categoryLabel = categoryLabel(category);
-          }
-          currentEditingId = null;
-          submitBtn.textContent = 'Добавить платёж';
-        } else {
-          const payment = {
-            id: Date.now().toString(),
-            name,
-            amount,
-            date,
-            category,
-            categoryLabel: categoryLabel(category)
-          };
-
-          payments.push(payment);
-        }
-
-        savePayments();
-        updateDashboard();
-        renderTable(searchInput.value);
-
-        form.reset();
-      });
-
-      form.addEventListener('reset', () => {
-        currentEditingId = null;
-        submitBtn.textContent = 'Добавить платёж';
-      });
-
-      searchInput.addEventListener('input', () => {
-        renderTable(searchInput.value);
-      });
 
       function initTheme() {
         const stored = localStorage.getItem('paycontrol_theme');
@@ -444,8 +533,6 @@
         currentYearEl.textContent = new Date().getFullYear();
         initTheme();
         loadPayments();
-        updateDashboard();
-        renderTable('');
       }
 
       document.addEventListener('DOMContentLoaded', init);
