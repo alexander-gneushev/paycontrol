@@ -443,6 +443,7 @@ select {
   font-size: 13px;
   outline: none;
   transition: border-color 0.15s ease;
+  box-sizing: border-box;
 }
 
 [data-theme='light'] input,
@@ -484,9 +485,16 @@ select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234b5563' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
 }
 
+input[type='date'] {
+  padding-right: 36px;
+}
+
 input[type='date']::-webkit-calendar-picker-indicator {
   filter: invert(1);
   cursor: pointer;
+  width: 16px;
+  height: 16px;
+  margin-right: 12px;
 }
 
 [data-theme='light'] input[type='date']::-webkit-calendar-picker-indicator {
@@ -757,21 +765,91 @@ input[type='date']::-webkit-calendar-picker-indicator {
   }
 
   .layout-two-column {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column-reverse;
   }
 
   .card {
     padding: 14px 14px 12px;
   }
 
-  .payments-table th:nth-child(2),
-  .payments-table td:nth-child(2) {
-    white-space: nowrap;
+  /* Mobile table card layout */
+  .payments-table {
+    display: block;
   }
 
-  .payments-table th:nth-child(3),
+  .payments-table thead {
+    display: none;
+  }
+
+  .payments-table tbody {
+    display: block;
+  }
+
+  .payments-table tr {
+    display: block;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+  }
+
+  .payments-table td {
+    display: block;
+    padding: 0;
+    border: none;
+    text-align: left;
+  }
+
+  .payments-table td:not(.table-actions-cell) {
+    margin-bottom: 8px;
+  }
+
+  .payments-table td:first-child {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .payments-table td:nth-child(2),
   .payments-table td:nth-child(3) {
-    white-space: nowrap;
+    display: inline-block;
+    font-size: 14px;
+    margin-right: 12px;
+    margin-bottom: 8px;
+  }
+
+  .payments-table td:nth-child(4) {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .table-actions-cell {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: auto;
+  }
+
+  .icon-btn {
+    margin-left: 4px;
+  }
+
+  [data-theme='light'] .payments-table tr {
+    background: #ffffff;
+    border-color: #e5e7eb;
+  }
+
+  [data-theme='light'] .payments-table td:first-child {
+    color: #1a1a1a;
+  }
+
+  [data-theme='light'] .payments-table td:nth-child(4) {
+    color: #6b7280;
   }
 }
 
