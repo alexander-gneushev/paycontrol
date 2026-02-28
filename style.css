@@ -476,6 +476,7 @@ select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239ca3af' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   padding-right: 36px;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 [data-theme='light'] select {
@@ -487,6 +488,7 @@ select {
 
 input[type='date'] {
   padding-right: 36px;
+  box-sizing: border-box;
 }
 
 input[type='date']::-webkit-calendar-picker-indicator {
@@ -495,10 +497,31 @@ input[type='date']::-webkit-calendar-picker-indicator {
   width: 16px;
   height: 16px;
   margin-right: 12px;
+  position: relative;
+  z-index: 1;
 }
 
 [data-theme='light'] input[type='date']::-webkit-calendar-picker-indicator {
   filter: none;
+}
+
+/* Мобильная версия */
+@media (max-width: 768px) {
+  select {
+    background-position: right 12px center;
+    padding-right: 36px;
+  }
+
+  input[type='date'] {
+    padding-right: 36px;
+  }
+
+  input[type='date']::-webkit-calendar-picker-indicator {
+    width: 16px;
+    height: 16px;
+    margin-right: 12px;
+    background-size: 16px 16px;
+  }
 }
 
 .form-actions {
