@@ -147,7 +147,7 @@ body {
 
 [data-theme='light'] .logo-title,
 [data-theme='light'] .logo-subtitle {
-  color: #f9fafb;
+  color: #1a1a1a;
 }
 
 .header-actions {
@@ -212,19 +212,35 @@ body {
 }
 
 [data-theme='light'] .btn-ghost {
-  border-color: rgba(255, 255, 255, 0.9);
-  background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), rgba(15, 23, 42, 0.8));
-  color: #ffffff;
+  border-color: #d1d5db;
+  background: #ffffff;
+  color: #374151;
+}
+
+[data-theme='light'] .btn-ghost:hover {
+  background: #f3f4f6;
+  color: #1a1a1a;
+  border-color: #9ca3af;
 }
 
 [data-theme='light'] #themeToggle.btn-ghost {
-  border-color: rgba(255, 255, 255, 0.95);
-  color: #ffffff;
-  background: transparent;
+  border-color: #d1d5db;
+  color: #374151;
+  background: #ffffff;
 }
 
 [data-theme='light'] #themeToggle.btn-ghost:hover {
-  background: rgba(15, 23, 42, 0.22);
+  background: #f3f4f6;
+}
+
+[data-theme='light'] #telegramNotify.btn-ghost {
+  border-color: #d1d5db;
+  color: #374151;
+  background: #ffffff;
+}
+
+[data-theme='light'] #telegramNotify.btn-ghost:hover {
+  background: #f3f4f6;
 }
 
 .btn:active {
@@ -293,7 +309,7 @@ body {
 }
 
 [data-theme='light'] .card-title {
-  color: #111827;
+  color: #374151;
 }
 
 .card-value {
@@ -308,6 +324,18 @@ body {
   margin-top: 4px;
   font-size: 12px;
   color: var(--text-muted);
+}
+
+[data-theme='light'] .card-meta {
+  color: #6b7280;
+}
+
+[data-theme='light'] .card-value {
+  color: #1a1a1a;
+}
+
+[data-theme='light'] .app-footer {
+  color: #6b7280;
 }
 
 .tags {
@@ -399,7 +427,7 @@ body {
 }
 
 [data-theme='light'] .form-row label {
-  color: #4b5563;
+  color: #374151;
 }
 
 input,
@@ -705,15 +733,31 @@ input[type='date']::-webkit-calendar-picker-indicator {
   opacity: 0.9;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .app-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
   }
 
   .header-actions {
     align-self: stretch;
     justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .header-actions .btn {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .dashboard {
+    grid-template-columns: 1fr;
+  }
+
+  .layout-two-column {
+    grid-template-columns: 1fr;
   }
 
   .card {
