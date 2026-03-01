@@ -1,5 +1,5 @@
 (function () {
-  // Инициализация Supabase
+  // Инициализация Supabase — подключаемся к нашей базе данных
   const supabaseUrl = 'https://dlhmcrmwndlwzaaogyoy.supabase.co';
   const supabaseKey = 'sb_publishable_h6w08Q0zo8C1ZRRU0xX5lQ_zN7wJnOF';
   const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -28,11 +28,15 @@
   let payments = [];
   let currentEditingId = null;
 
+  // Здесь будем хранить данные текущего пользователя после проверки авторизации
+  // Изначально null — заполнится в функции init()
+  let currentUser = null;
+
   const submitBtn = form.querySelector('button[type="submit"]');
 
   // Обработчик отправки формы
   form.addEventListener('submit', async (event) => {
-    event.preventDefault(); // Предотвращаем стандартную отправку формы
+    event.preventDefault();
 
     const formData = new FormData(form);
     const name = String(formData.get('name') || '').trim();
@@ -159,7 +163,6 @@
     const success = await sendTelegramMessage(message);
     
     if (success) {
-      // Показываем уведомление пользователю
       const notification = document.createElement('div');
       notification.style.cssText = `
         position: fixed;
@@ -188,7 +191,6 @@
     }
   }
 
-  // Обработчик кнопки уведомлений
   telegramNotifyBtn.addEventListener('click', sendPaymentNotifications);
 
   function formatCurrency(value) {
@@ -211,6 +213,8 @@
 
   async function loadPayments() {
     try {
+      // Благодаря RLS Supabase автоматически вернёт только платежи текущего пользователя.
+      // Нам не нужно явно фильтровать по user_id — база делает это сама через политики.
       const { data, error } = await supabase
         .from('payments')
         .select('*')
@@ -247,7 +251,11 @@
           name: paymentData.name,
           amount: paymentData.amount,
           payment_date: paymentData.date,
-          category: paymentData.category
+          category: paymentData.category,
+          // Подставляем user_id текущего пользователя.
+          // Без этого RLS-политика на INSERT отклонит запрос,
+          // потому что условие (auth.uid() = user_id) не выполнится для NULL.
+          user_id: currentUser.id
         }])
         .select()
         .single();
@@ -276,6 +284,7 @@
           amount: paymentData.amount,
           payment_date: paymentData.date,
           category: paymentData.category
+          // user_id при обновлении не трогаем — он уже правильно установлен
         })
         .eq('id', parseInt(id))
         .select()
@@ -507,9 +516,57 @@
     }
   });
 
-  function init() {
+  // Функция выхода из аккаунта
+  async function signOut() {
+    await supabase.auth.signOut();
+    // После выхода перенаправляем на страницу входа
+    window.location.href = 'login.html';
+  }
+
+  // Добавляем кнопку "Выйти" в хедер динамически
+  // Это позволяет не трогать HTML — всё делается из JS
+  function addSignOutButton(user) {
+    const headerActions = document.querySelector('.header-actions');
+
+    // Показываем email пользователя, чтобы было понятно кто залогинен
+    const userEmail = document.createElement('span');
+    userEmail.className = 'user-email';
+    userEmail.textContent = user.email;
+    userEmail.style.cssText = 'font-size: 13px; color: var(--text-secondary); margin-right: 4px;';
+
+    const signOutBtn = document.createElement('button');
+    signOutBtn.className = 'btn btn-ghost';
+    signOutBtn.textContent = '🚪 Выйти';
+    signOutBtn.type = 'button';
+    signOutBtn.addEventListener('click', signOut);
+
+    headerActions.appendChild(userEmail);
+    headerActions.appendChild(signOutBtn);
+  }
+
+  async function init() {
     currentYearEl.textContent = new Date().getFullYear();
     initTheme();
+
+    // Проверяем есть ли активная сессия у пользователя.
+    // getSession() читает сессию из localStorage — это быстро, без запроса к серверу.
+    const { data: { session } } = await supabase.auth.getSession();
+
+    if (!session) {
+      // Сессии нет — пользователь не залогинен.
+      // Перенаправляем на страницу входа и прекращаем выполнение кода.
+      window.location.href = 'login.html';
+      return; // важно: без return код продолжит выполняться пока идёт редирект
+    }
+
+    // Сессия есть — сохраняем данные пользователя в переменную currentUser.
+    // Теперь currentUser.id доступен везде в этом файле, в том числе в savePayment().
+    currentUser = session.user;
+
+    // Добавляем кнопку выхода и показываем email пользователя
+    addSignOutButton(currentUser);
+
+    // Загружаем платежи — теперь RLS автоматически отфильтрует только нужные
     loadPayments();
   }
 

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayControl — Вход</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Стили специфичные для страницы входа */
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .auth-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      justify-content: center;
+    }
+
+    .auth-logo .logo-mark {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .auth-logo .logo-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Вкладки для переключения между "Войти" и "Регистрация" */
+    .auth-tabs {
+      display: flex;
+      background: var(--bg-secondary, #1a1a2e);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+      gap: 4px;
+    }
+
+    .auth-tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .auth-tab.active {
+      background: var(--card-bg);
+      color: var(--text-primary);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .auth-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .auth-form .form-row {
+      margin-bottom: 16px;
+    }
+
+    .auth-message {
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 16px;
+      display: none; /* скрыто по умолчанию */
+    }
+
+    .auth-message.success {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #22c55e;
+      display: block;
+    }
+
+    .auth-message.error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #ef4444;
+      display: block;
+    }
+
+    .auth-footer-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .auth-footer-link a {
+      color: #6366f1;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .auth-footer-link a:hover {
+      text-decoration: underline;
+    }
+
+    .btn-auth {
+      width: 100%;
+      padding: 13px;
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+
+      <div class="auth-logo">
+        <div class="logo-mark">₽</div>
+        <span class="logo-title">PayControl</span>
+      </div>
+
+      <!-- Сообщение об ошибке или успехе (показывается динамически) -->
+      <div class="auth-message" id="authMessage"></div>
+
+      <!-- РЕЖИМ 1: Обычный вход/регистрация -->
+      <div id="modeAuth">
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Войти</button>
+          <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Регистрация</button>
+        </div>
+
+        <!-- Форма входа -->
+        <form class="auth-form" id="formLogin" onsubmit="handleLogin(event)">
+          <div class="form-row">
+            <label for="loginEmail">Email</label>
+            <input id="loginEmail" type="email" placeholder="your@email.com" required />
+          </div>
+          <div class="form-row">
+            <label for="loginPassword">Пароль</label>
+            <input id="loginPassword" type="password" placeholder="Введите пароль" required />
+          </div>
+          <button class="btn btn-primary btn-auth" type="submit" id="btnLogin">Войти</button>
+        </form>
+
+        <!-- Форма регистрации (скрыта по умолчанию) -->
+        <form class="auth-form" id="formRegister" style="display:none;" onsubmit="handleRegister(event)">
+          <div class="form-row">
+            <label for="regEmail">Email</label>
+            <input id="regEmail" type="email" placeholder="your@email.com" required />
+          </div>
+          <div class="form-row">
+            <label for="regPassword">Пароль</label>
+            <input id="regPassword" type="password" placeholder="Минимум 6 символов" minlength="6" required />
+          </div>
+          <div class="form-row">
+            <label for="regPasswordConfirm">Подтвердите пароль</label>
+            <input id="regPasswordConfirm" type="password" placeholder="Повторите пароль" required />
+          </div>
+          <button class="btn btn-primary btn-auth" type="submit" id="btnRegister">Создать аккаунт</button>
+        </form>
+
+        <div class="auth-footer-link">
+          <a onclick="switchMode('forgot')">Забыли пароль?</a>
+        </div>
+      </div>
+
+      <!-- РЕЖИМ 2: Запрос восстановления пароля -->
+      <div id="modeForgot" style="display:none;">
+        <div class="auth-title">Восстановление пароля</div>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; text-align: center;">
+          Введите email — мы отправим ссылку для сброса пароля.
+        </p>
+        <form class="auth-form" onsubmit="handleForgot(event)">
+          <div class="form-row">
+            <label for="forgotEmail">Email</label>
+            <input id="forgotEmail" type="email" placeholder="your@email.com" required />
+          </div>
+          <button class="btn btn-primary btn-auth" type="submit" id="btnForgot">Отправить ссылку</button>
+        </form>
+        <div class="auth-footer-link">
+          <a onclick="switchMode('auth')">← Вернуться ко входу</a>
+        </div>
+      </div>
+
+      <!-- РЕЖИМ 3: Установка нового пароля (после перехода по ссылке из письма) -->
+      <div id="modeReset" style="display:none;">
+        <div class="auth-title">Новый пароль</div>
+        <form class="auth-form" onsubmit="handleReset(event)">
+          <div class="form-row">
+            <label for="newPassword">Новый пароль</label>
+            <input id="newPassword" type="password" placeholder="Минимум 6 символов" minlength="6" required />
+          </div>
+          <div class="form-row">
+            <label for="newPasswordConfirm">Подтвердите пароль</label>
+            <input id="newPasswordConfirm" type="password" placeholder="Повторите пароль" required />
+          </div>
+          <button class="btn btn-primary btn-auth" type="submit" id="btnReset">Сохранить пароль</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // Инициализация Supabase — те же данные что и в script.js
+    const supabaseUrl = 'https://dlhmcrmwndlwzaaogyoy.supabase.co';
+    const supabaseKey = 'sb_publishable_h6w08Q0zo8C1ZRRU0xX5lQ_zN7wJnOF';
+    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    // --- Вспомогательные функции ---
+
+    function showMessage(text, type) {
+      // type: 'success' или 'error'
+      const el = document.getElementById('authMessage');
+      el.textContent = text;
+      el.className = 'auth-message ' + type;
+    }
+
+    function hideMessage() {
+      const el = document.getElementById('authMessage');
+      el.className = 'auth-message';
+    }
+
+    function setLoading(btnId, loading) {
+      // Блокируем кнопку во время запроса, чтобы не отправить дважды
+      const btn = document.getElementById(btnId);
+      btn.disabled = loading;
+      btn.style.opacity = loading ? '0.6' : '1';
+    }
+
+    // Переключение режимов (auth / forgot / reset)
+    function switchMode(mode) {
+      hideMessage();
+      document.getElementById('modeAuth').style.display = mode === 'auth' ? 'block' : 'none';
+      document.getElementById('modeForgot').style.display = mode === 'forgot' ? 'block' : 'none';
+      document.getElementById('modeReset').style.display = mode === 'reset' ? 'block' : 'none';
+    }
+
+    // Переключение вкладок внутри режима auth
+    function switchTab(tab) {
+      hideMessage();
+      const isLogin = tab === 'login';
+      document.getElementById('formLogin').style.display = isLogin ? 'block' : 'none';
+      document.getElementById('formRegister').style.display = isLogin ? 'none' : 'block';
+      document.getElementById('tabLogin').classList.toggle('active', isLogin);
+      document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+    }
+
+    // --- Обработчики форм ---
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      hideMessage();
+      setLoading('btnLogin', true);
+
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+      setLoading('btnLogin', false);
+
+      if (error) {
+        showMessage('Ошибка входа: ' + error.message, 'error');
+        return;
+      }
+
+      // Успешный вход — переходим на главную страницу
+      window.location.href = 'index.html';
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      hideMessage();
+
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const confirm = document.getElementById('regPasswordConfirm').value;
+
+      // Проверяем что пароли совпадают — до запроса к серверу
+      if (password !== confirm) {
+        showMessage('Пароли не совпадают', 'error');
+        return;
+      }
+
+      setLoading('btnRegister', true);
+
+      const { error } = await supabase.auth.signUp({ email, password });
+
+      setLoading('btnRegister', false);
+
+      if (error) {
+        showMessage('Ошибка регистрации: ' + error.message, 'error');
+        return;
+      }
+
+      // Supabase по умолчанию отправляет письмо для подтверждения email
+      showMessage('Аккаунт создан! Проверьте почту для подтверждения email.', 'success');
+    }
+
+    async function handleForgot(e) {
+      e.preventDefault();
+      hideMessage();
+      setLoading('btnForgot', true);
+
+      const email = document.getElementById('forgotEmail').value;
+
+      // redirectTo — куда Supabase перенаправит пользователя после клика по ссылке в письме
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/login.html'
+      });
+
+      setLoading('btnForgot', false);
+
+      if (error) {
+        showMessage('Ошибка: ' + error.message, 'error');
+        return;
+      }
+
+      showMessage('Ссылка отправлена! Проверьте почту.', 'success');
+    }
+
+    async function handleReset(e) {
+      e.preventDefault();
+      hideMessage();
+
+      const password = document.getElementById('newPassword').value;
+      const confirm = document.getElementById('newPasswordConfirm').value;
+
+      if (password !== confirm) {
+        showMessage('Пароли не совпадают', 'error');
+        return;
+      }
+
+      setLoading('btnReset', true);
+
+      // Supabase уже авторизовал пользователя через токен из URL,
+      // поэтому просто обновляем пароль
+      const { error } = await supabase.auth.updateUser({ password });
+
+      setLoading('btnReset', false);
+
+      if (error) {
+        showMessage('Ошибка: ' + error.message, 'error');
+        return;
+      }
+
+      showMessage('Пароль успешно изменён! Сейчас перенаправим вас...', 'success');
+
+      // Небольшая задержка, чтобы пользователь увидел сообщение об успехе
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 2000);
+    }
+
+    // --- Инициализация: определяем режим при загрузке страницы ---
+
+    async function init() {
+      // Supabase передаёт тип события через хэш URL (#access_token=...&type=recovery)
+      // Нужно обработать его до того, как он исчезнет
+      const hash = window.location.hash;
+
+      if (hash.includes('type=recovery')) {
+        // Пользователь пришёл по ссылке восстановления пароля
+        // Supabase сам прочитает токен из хэша и создаст сессию
+        const { data, error } = await supabase.auth.getSession();
+
+        if (data?.session) {
+          switchMode('reset');
+          return;
+        }
+      }
+
+      // Проверяем — вдруг пользователь уже залогинен?
+      // Если да, сразу отправляем его на главную страницу
+      const { data } = await supabase.auth.getSession();
+      if (data?.session) {
+        window.location.href = 'index.html';
+      }
+    }
+
+    // Инициализируем тему (берём из localStorage, если есть)
+    const storedTheme = localStorage.getItem('paycontrol_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', storedTheme);
+
+    init();
+  </script>
+</body>
+</html>
