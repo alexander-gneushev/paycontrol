@@ -103,7 +103,7 @@
     // Инициализация Supabase — те же данные что и в script.js
     const supabaseUrl = 'https://dlhmcrmwndlwzaaogyoy.supabase.co';
     const supabaseKey = 'sb_publishable_h6w08Q0zo8C1ZRRU0xX5lQ_zN7wJnOF';
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const sbClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
     // --- Вспомогательные функции ---
 
@@ -154,7 +154,7 @@
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
 
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { error } = await sbClient.auth.signInWithPassword({ email, password });
 
       setLoading('btnLogin', false);
 
@@ -183,7 +183,7 @@
 
       setLoading('btnRegister', true);
 
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { error } = await sbClient.auth.signUp({ email, password });
 
       setLoading('btnRegister', false);
 
@@ -204,7 +204,7 @@
       const email = document.getElementById('forgotEmail').value;
 
       // redirectTo — куда Supabase перенаправит пользователя после клика по ссылке в письме
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await sbClient.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + '/login.html'
       });
 
@@ -234,7 +234,7 @@
 
       // Supabase уже авторизовал пользователя через токен из URL,
       // поэтому просто обновляем пароль
-      const { error } = await supabase.auth.updateUser({ password });
+      const { error } = await sbClient.auth.updateUser({ password });
 
       setLoading('btnReset', false);
 
@@ -261,7 +261,7 @@
       if (hash.includes('type=recovery')) {
         // Пользователь пришёл по ссылке восстановления пароля
         // Supabase сам прочитает токен из хэша и создаст сессию
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await sbClient.auth.getSession();
 
         if (data?.session) {
           switchMode('reset');
@@ -271,7 +271,7 @@
 
       // Проверяем — вдруг пользователь уже залогинен?
       // Если да, сразу отправляем его на главную страницу
-      const { data } = await supabase.auth.getSession();
+      const { data } = await sbClient.auth.getSession();
       if (data?.session) {
         window.location.href = 'index.html';
       }
