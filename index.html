@@ -260,9 +260,9 @@
           
           const daysDiff = Math.ceil((paymentDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 
-          if (daysDiff >= 0 && daysDiff <= 3) {
+          if (daysDiff <= 0) {
             urgentPayments.push(payment);
-          } else if (daysDiff >= 4 && daysDiff <= 7) {
+          } else if (daysDiff >= 1 && daysDiff <= 7) {
             upcomingPayments.push(payment);
           }
         });
@@ -454,16 +454,16 @@
         const total = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
         totalMonthlyEl.textContent = formatCurrency(total);
 
-        const futurePayments = payments
+        const allPayments = payments
           .map((p) => ({ ...p, dateObj: new Date(p.date) }))
-          .filter((p) => !Number.isNaN(p.dateObj.getTime()) && p.dateObj >= now)
+          .filter((p) => !Number.isNaN(p.dateObj.getTime()))
           .sort((a, b) => a.dateObj - b.dateObj);
 
-        if (futurePayments.length === 0) {
+        if (allPayments.length === 0) {
           nextPaymentEl.textContent = '—';
           nextPaymentMetaEl.textContent = 'Ближайших платежей нет';
         } else {
-          const next = futurePayments[0];
+          const next = allPayments[0];
           nextPaymentEl.textContent = `${formatCurrency(next.amount)}`;
           nextPaymentMetaEl.textContent = `${next.name} — ${formatDate(next.date)}`;
         }
@@ -518,7 +518,7 @@
             const msDiff = dueDate.getTime() - today.getTime();
             const daysDiff = msDiff / (1000 * 60 * 60 * 24);
 
-            if (daysDiff >= 0 && daysDiff <= 3) {
+            if (daysDiff <= 0) {
               tr.classList.add('row-warning');
             }
 
