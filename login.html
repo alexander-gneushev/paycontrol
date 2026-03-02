@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PayControl — Вход</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="login.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -35,7 +36,10 @@
           </div>
           <div class="form-row">
             <label for="loginPassword">Пароль</label>
-            <input id="loginPassword" type="password" placeholder="Введите пароль" required />
+            <div class="password-wrap">
+              <input id="loginPassword" type="password" placeholder="Введите пароль" required />
+              <button type="button" class="eye-btn" onclick="togglePassword('loginPassword', this)" tabindex="-1">👁</button>
+            </div>
           </div>
           <button class="btn btn-primary btn-auth" type="submit" id="btnLogin">Войти</button>
         </form>
@@ -48,11 +52,17 @@
           </div>
           <div class="form-row">
             <label for="regPassword">Пароль</label>
-            <input id="regPassword" type="password" placeholder="Минимум 6 символов" minlength="6" required />
+            <div class="password-wrap">
+              <input id="regPassword" type="password" placeholder="Минимум 6 символов" minlength="6" required />
+              <button type="button" class="eye-btn" onclick="togglePassword('regPassword', this)" tabindex="-1">👁</button>
+            </div>
           </div>
           <div class="form-row">
             <label for="regPasswordConfirm">Подтвердите пароль</label>
-            <input id="regPasswordConfirm" type="password" placeholder="Повторите пароль" required />
+            <div class="password-wrap">
+              <input id="regPasswordConfirm" type="password" placeholder="Повторите пароль" required />
+              <button type="button" class="eye-btn" onclick="togglePassword('regPasswordConfirm', this)" tabindex="-1">👁</button>
+            </div>
           </div>
           <button class="btn btn-primary btn-auth" type="submit" id="btnRegister">Создать аккаунт</button>
         </form>
@@ -86,11 +96,17 @@
         <form class="auth-form" onsubmit="handleReset(event)">
           <div class="form-row">
             <label for="newPassword">Новый пароль</label>
-            <input id="newPassword" type="password" placeholder="Минимум 6 символов" minlength="6" required />
+            <div class="password-wrap">
+              <input id="newPassword" type="password" placeholder="Минимум 6 символов" minlength="6" required />
+              <button type="button" class="eye-btn" onclick="togglePassword('newPassword', this)" tabindex="-1">👁</button>
+            </div>
           </div>
           <div class="form-row">
             <label for="newPasswordConfirm">Подтвердите пароль</label>
-            <input id="newPasswordConfirm" type="password" placeholder="Повторите пароль" required />
+            <div class="password-wrap">
+              <input id="newPasswordConfirm" type="password" placeholder="Повторите пароль" required />
+              <button type="button" class="eye-btn" onclick="togglePassword('newPasswordConfirm', this)" tabindex="-1">👁</button>
+            </div>
           </div>
           <button class="btn btn-primary btn-auth" type="submit" id="btnReset">Сохранить пароль</button>
         </form>
@@ -275,6 +291,15 @@
       if (data?.session) {
         window.location.href = 'index.html';
       }
+    }
+
+    // Переключение видимости пароля
+    // inputId — id поля, btn — кнопка-глаз (чтобы менять её вид)
+    function togglePassword(inputId, btn) {
+      const input = document.getElementById(inputId);
+      const isHidden = input.type === 'password';
+      input.type = isHidden ? 'text' : 'password';
+      btn.textContent = isHidden ? '🙈' : '👁';
     }
 
     // Инициализируем тему (берём из localStorage, если есть)

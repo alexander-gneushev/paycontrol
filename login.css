@@ -136,6 +136,35 @@
   text-decoration: underline;
 }
 
+/* Обёртка поля пароля — нужна чтобы кнопка-глаз была внутри поля */
+.password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrap input {
+  padding-right: 42px;
+}
+
+.eye-btn {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+  user-select: none;
+}
+
+.eye-btn:hover {
+  opacity: 1;
+}
+
 /* Кнопка занимает всю ширину карточки */
 .btn-auth {
   width: 100%;
