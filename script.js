@@ -102,7 +102,7 @@
       .from('profiles')
       .select('telegram_chat_id')
       .eq('user_id', currentUser.id)
-      .single();
+      .maybeSingle();
 
     if (data?.telegram_chat_id) {
       telegramChatIdInput.value = data.telegram_chat_id;
