@@ -134,6 +134,49 @@
     </footer>
   </div>
 
+  <!-- Модальное окно настройки Telegram-уведомлений -->
+  <div class="modal-overlay" id="telegramModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="modal-title">📬 Уведомления в Telegram</span>
+        <button class="modal-close" id="telegramModalClose" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+
+        <div class="modal-step">
+          <div class="modal-step-num">1</div>
+          <div>
+            <strong>Найдите бота в Telegram</strong>
+            <p>Откройте Telegram и напишите боту любое сообщение:</p>
+            <a class="modal-tg-link" href="https://t.me/paycontrol_alex_bot" target="_blank">@paycontrol_alex_bot</a>
+          </div>
+        </div>
+
+        <div class="modal-step">
+          <div class="modal-step-num">2</div>
+          <div>
+            <strong>Узнайте свой Telegram ID</strong>
+            <p>Напишите боту <code>@userinfobot</code> любое сообщение — он ответит вашим ID. Скопируйте число из поля «Ид».</p>
+            <a class="modal-tg-link" href="https://t.me/userinfobot" target="_blank">@userinfobot</a>
+          </div>
+        </div>
+
+        <div class="modal-step">
+          <div class="modal-step-num">3</div>
+          <div style="width:100%">
+            <strong>Введите ваш Telegram ID</strong>
+            <div class="modal-input-row">
+              <input type="number" id="telegramChatIdInput" placeholder="Например, 250941181" />
+              <button class="btn btn-primary" id="saveTelegramId" type="button">Сохранить</button>
+            </div>
+            <div class="modal-status" id="telegramStatus"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>

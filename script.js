@@ -21,10 +21,6 @@
   const themeToggleBtn = document.getElementById('themeToggle');
   const telegramNotifyBtn = document.getElementById('telegramNotify');
 
-  // Telegram настройки
-  const telegramBotToken = '8035741485:AAFGXxbJSqLOnhdeFKuEgpZtvnIejvaAJqU';
-  const telegramChatId = '250941181';
-
   let payments = [];
   let currentEditingId = null;
 
@@ -87,111 +83,71 @@
     renderTable(searchInput.value);
   });
 
-  // Функция отправки сообщения в Telegram
-  async function sendTelegramMessage(message) {
-    try {
-      const response = await fetch(`https://api.telegram.org/bot${telegramBotToken}/sendMessage`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chat_id: telegramChatId,
-          text: message,
-          parse_mode: 'HTML'
-        })
-      });
+  // --- Telegram модальное окно ---
 
-      const data = await response.json();
-      if (!data.ok) {
-        throw new Error(data.description || 'Ошибка отправки сообщения');
-      }
+  const telegramModal = document.getElementById('telegramModal');
+  const telegramModalClose = document.getElementById('telegramModalClose');
+  const saveTelegramIdBtn = document.getElementById('saveTelegramId');
+  const telegramChatIdInput = document.getElementById('telegramChatIdInput');
+  const telegramStatus = document.getElementById('telegramStatus');
 
-      return true;
-    } catch (error) {
-      console.error('Ошибка отправки в Telegram:', error);
-      return false;
+  // Открыть модальное окно и загрузить текущий chat_id если есть
+  telegramNotifyBtn.addEventListener('click', async () => {
+    telegramModal.classList.add('active');
+    telegramStatus.textContent = '';
+    telegramStatus.className = 'modal-status';
+
+    // Загружаем сохранённый chat_id из профиля
+    const { data } = await supabase
+      .from('profiles')
+      .select('telegram_chat_id')
+      .eq('user_id', currentUser.id)
+      .single();
+
+    if (data?.telegram_chat_id) {
+      telegramChatIdInput.value = data.telegram_chat_id;
     }
-  }
+  });
 
-  // Функция отправки уведомлений о платежах
-  async function sendPaymentNotifications() {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
+  // Закрыть по кнопке ×
+  telegramModalClose.addEventListener('click', () => {
+    telegramModal.classList.remove('active');
+  });
 
-    const urgentPayments = [];
-    const upcomingPayments = [];
+  // Закрыть по клику на фон
+  telegramModal.addEventListener('click', (e) => {
+    if (e.target === telegramModal) telegramModal.classList.remove('active');
+  });
 
-    payments.forEach(payment => {
-      const paymentDate = new Date(payment.date);
-      paymentDate.setHours(0, 0, 0, 0);
-      
-      const daysDiff = Math.ceil((paymentDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  // Сохранить chat_id в таблицу profiles
+  saveTelegramIdBtn.addEventListener('click', async () => {
+    const chatId = parseInt(telegramChatIdInput.value);
 
-      if (daysDiff <= 0) {
-        urgentPayments.push(payment);
-      } else if (daysDiff >= 1 && daysDiff <= 7) {
-        upcomingPayments.push(payment);
-      }
-    });
-
-    let message = '<b>📊 Уведомления о платежах</b>\n\n';
-
-    if (urgentPayments.length > 0) {
-      message += '<b>⚠️ Срочные платежи:</b>\n';
-      urgentPayments.forEach(payment => {
-        message += `• ${payment.name} — ${formatCurrency(payment.amount)}, списание ${formatDate(payment.date)}\n`;
-      });
-      message += '\n';
+    if (!chatId || chatId <= 0) {
+      telegramStatus.textContent = 'Введите корректный Telegram ID';
+      telegramStatus.className = 'modal-status error';
+      return;
     }
 
-    if (upcomingPayments.length > 0) {
-      message += '<b>📅 Предстоящие платежи:</b>\n';
-      upcomingPayments.forEach(payment => {
-        message += `• ${payment.name} — ${formatCurrency(payment.amount)}, списание ${formatDate(payment.date)}\n`;
-      });
-      message += '\n';
+    saveTelegramIdBtn.disabled = true;
+
+    // upsert = insert если записи нет, update если есть
+    // это удобно потому что не нужно думать есть ли у пользователя профиль или нет
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ user_id: currentUser.id, telegram_chat_id: chatId }, { onConflict: 'user_id' });
+
+    saveTelegramIdBtn.disabled = false;
+
+    if (error) {
+      telegramStatus.textContent = 'Ошибка: ' + error.message;
+      telegramStatus.className = 'modal-status error';
+      return;
     }
 
-    if (urgentPayments.length === 0 && upcomingPayments.length === 0) {
-      message += '✅ Ближайших платежей нет\n\n';
-    }
-
-    const totalMonthly = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-    message += `<b>💰 Общая сумма платежей в месяц: ${formatCurrency(totalMonthly)}</b>`;
-
-    const success = await sendTelegramMessage(message);
-    
-    if (success) {
-      const notification = document.createElement('div');
-      notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, #22c55e, #16a34a);
-        color: white;
-        padding: 12px 20px;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(34, 197, 94, 0.3);
-        z-index: 1000;
-        font-weight: 500;
-        animation: slideIn 0.3s ease-out;
-      `;
-      notification.textContent = '📬 Уведомления отправлены в Telegram!';
-      document.body.appendChild(notification);
-
-      setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease-out';
-        setTimeout(() => {
-          document.body.removeChild(notification);
-        }, 300);
-      }, 3000);
-    } else {
-      alert('Ошибка отправки уведомлений. Проверьте консоль для деталей.');
-    }
-  }
-
-  telegramNotifyBtn.addEventListener('click', sendPaymentNotifications);
+    telegramStatus.textContent = '✅ Telegram ID сохранён! Уведомления будут приходить автоматически.';
+    telegramStatus.className = 'modal-status success';
+  });
 
   function formatCurrency(value) {
     const number = Number(value) || 0;
