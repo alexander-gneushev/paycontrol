@@ -159,6 +159,11 @@
   opacity: 0.6;
   transition: opacity 0.15s;
   user-select: none;
+  filter: invert(1); /* инвертируем цвет — тёмная иконка становится светлой */
+}
+
+[data-theme='light'] .eye-btn {
+  filter: none; /* в светлой теме иконка и так тёмная — инверсия не нужна */
 }
 
 .eye-btn:hover {
