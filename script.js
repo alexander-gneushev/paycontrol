@@ -88,14 +88,28 @@
   const telegramModal = document.getElementById('telegramModal');
   const telegramModalClose = document.getElementById('telegramModalClose');
   const saveTelegramIdBtn = document.getElementById('saveTelegramId');
+  const editTelegramIdBtn = document.getElementById('editTelegramId');
   const telegramChatIdInput = document.getElementById('telegramChatIdInput');
   const telegramStatus = document.getElementById('telegramStatus');
+
+  // Функция управляет состоянием поля:
+  // locked=true: поле заблокировано, кнопка сохранения неактивна, карандаш виден
+  // locked=false: поле активно, кнопка сохранения активна, карандаш скрыт
+  function setInputLocked(locked) {
+    telegramChatIdInput.disabled = locked;
+    telegramChatIdInput.style.opacity = locked ? '0.5' : '1';
+    saveTelegramIdBtn.disabled = locked;
+    saveTelegramIdBtn.style.opacity = locked ? '0.5' : '1';
+    editTelegramIdBtn.style.display = locked ? 'inline-flex' : 'none';
+  }
 
   // Открыть модальное окно и загрузить текущий chat_id если есть
   telegramNotifyBtn.addEventListener('click', async () => {
     telegramModal.classList.add('active');
     telegramStatus.textContent = '';
     telegramStatus.className = 'modal-status';
+    telegramChatIdInput.value = '';
+    setInputLocked(false); // по умолчанию поле активно
 
     // Загружаем сохранённый chat_id из профиля
     const { data } = await supabase
@@ -105,8 +119,20 @@
       .maybeSingle();
 
     if (data?.telegram_chat_id) {
+      // ID уже есть — показываем его и блокируем поле
       telegramChatIdInput.value = data.telegram_chat_id;
+      setInputLocked(true);
+      telegramStatus.textContent = '✅ Telegram ID подключён. Нажмите ✒️ чтобы изменить.';
+      telegramStatus.className = 'modal-status success';
     }
+  });
+
+  // Клик на карандаш — разблокируем поле для редактирования
+  editTelegramIdBtn.addEventListener('click', () => {
+    setInputLocked(false);
+    telegramChatIdInput.focus();
+    telegramStatus.textContent = '';
+    telegramStatus.className = 'modal-status';
   });
 
   // Закрыть по кнопке ×
@@ -132,7 +158,6 @@
     saveTelegramIdBtn.disabled = true;
 
     // upsert = insert если записи нет, update если есть
-    // это удобно потому что не нужно думать есть ли у пользователя профиль или нет
     const { error } = await supabase
       .from('profiles')
       .upsert({ user_id: currentUser.id, telegram_chat_id: chatId }, { onConflict: 'user_id' });
@@ -145,6 +170,8 @@
       return;
     }
 
+    // После сохранения снова блокируем поле
+    setInputLocked(true);
     telegramStatus.textContent = '✅ Telegram ID сохранён! Уведомления будут приходить автоматически.';
     telegramStatus.className = 'modal-status success';
   });

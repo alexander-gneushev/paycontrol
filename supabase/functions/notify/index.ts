@@ -74,7 +74,7 @@ Deno.serve(async () => {
         message += `  📅 ${dateStr}\n\n`;
       }
 
-      message += `Откройте PayControl чтобы отметить оплату.`;
+      message += `Откройте PayControl чтобы отметить оплату: <a href="https://thunderous-tartufo-f09dcf.netlify.app">PayControl</a>`;
 
       // Шаг 4: отправляем сообщение в Telegram
       const tgResponse = await fetch(
