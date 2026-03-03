@@ -122,7 +122,7 @@
       // ID уже есть — показываем его и блокируем поле
       telegramChatIdInput.value = data.telegram_chat_id;
       setInputLocked(true);
-      telegramStatus.textContent = '✅ Telegram ID подключён. Нажмите ✒️ чтобы изменить.';
+      telegramStatus.textContent = '✅ Telegram ID подключён. Нажмите ✏️ чтобы изменить.';
       telegramStatus.className = 'modal-status success';
     }
   });
