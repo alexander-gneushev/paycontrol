@@ -1013,10 +1013,36 @@ input[type='date']::-webkit-calendar-picker-indicator {
   display: flex;
   gap: 8px;
   margin-top: 8px;
+  align-items: center;
 }
 
-.modal-input-row input {
+.modal-input-row .input-wrap {
+  position: relative;
   flex: 1;
+}
+
+.modal-input-row .input-wrap input {
+  width: 100%;
+  padding-right: 36px; /* место для карандаша */
+}
+
+.modal-input-row .input-wrap #editTelegramId {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
+  color: var(--text-muted);
+  opacity: 0.6;
+  transition: opacity var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+}
+
+.modal-input-row .input-wrap #editTelegramId:hover {
+  opacity: 1;
+  color: var(--accent-strong);
+  transform: translateY(-50%) scale(1.15);
 }
 
 .modal-status {
