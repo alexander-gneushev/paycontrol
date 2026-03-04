@@ -7,7 +7,8 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="login.css" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Подключаем PocketBase SDK вместо Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.0/dist/pocketbase.umd.js"></script>
 </head>
 <body>
   <div class="auth-wrapper">
@@ -53,7 +54,7 @@
           <div class="form-row">
             <label for="regPassword">Пароль</label>
             <div class="password-wrap">
-              <input id="regPassword" type="password" placeholder="Минимум 6 символов" minlength="6" required />
+              <input id="regPassword" type="password" placeholder="Минимум 8 символов" minlength="8" required />
               <button type="button" class="eye-btn" onclick="togglePassword('regPassword', this)" tabindex="-1">👁</button>
             </div>
           </div>
@@ -66,91 +67,35 @@
           </div>
           <button class="btn btn-primary btn-auth" type="submit" id="btnRegister">Создать аккаунт</button>
         </form>
-
-        <div class="auth-footer-link">
-          <a onclick="switchMode('forgot')">Забыли пароль?</a>
-        </div>
-      </div>
-
-      <!-- РЕЖИМ 2: Запрос восстановления пароля -->
-      <div id="modeForgot" style="display:none;">
-        <div class="auth-title">Восстановление пароля</div>
-        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; text-align: center;">
-          Введите email — мы отправим ссылку для сброса пароля.
-        </p>
-        <form class="auth-form" onsubmit="handleForgot(event)">
-          <div class="form-row">
-            <label for="forgotEmail">Email</label>
-            <input id="forgotEmail" type="email" placeholder="your@email.com" required />
-          </div>
-          <button class="btn btn-primary btn-auth" type="submit" id="btnForgot">Отправить ссылку</button>
-        </form>
-        <div class="auth-footer-link">
-          <a onclick="switchMode('auth')">← Вернуться ко входу</a>
-        </div>
-      </div>
-
-      <!-- РЕЖИМ 3: Установка нового пароля (после перехода по ссылке из письма) -->
-      <div id="modeReset" style="display:none;">
-        <div class="auth-title">Новый пароль</div>
-        <form class="auth-form" onsubmit="handleReset(event)">
-          <div class="form-row">
-            <label for="newPassword">Новый пароль</label>
-            <div class="password-wrap">
-              <input id="newPassword" type="password" placeholder="Минимум 6 символов" minlength="6" required />
-              <button type="button" class="eye-btn" onclick="togglePassword('newPassword', this)" tabindex="-1">👁</button>
-            </div>
-          </div>
-          <div class="form-row">
-            <label for="newPasswordConfirm">Подтвердите пароль</label>
-            <div class="password-wrap">
-              <input id="newPasswordConfirm" type="password" placeholder="Повторите пароль" required />
-              <button type="button" class="eye-btn" onclick="togglePassword('newPasswordConfirm', this)" tabindex="-1">👁</button>
-            </div>
-          </div>
-          <button class="btn btn-primary btn-auth" type="submit" id="btnReset">Сохранить пароль</button>
-        </form>
       </div>
 
     </div>
   </div>
 
   <script>
-    // Инициализация Supabase — те же данные что и в script.js
-    const supabaseUrl = 'https://dlhmcrmwndlwzaaogyoy.supabase.co';
-    const supabaseKey = 'sb_publishable_h6w08Q0zo8C1ZRRU0xX5lQ_zN7wJnOF';
-    const sbClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+    // Инициализация PocketBase.
+    // В отличие от Supabase, здесь нет anon key — только URL нашего сервера.
+    // PocketBase сам управляет токенами через localStorage.
+    const pb = new PocketBase('https://paycontrol.dcmr.ru/pb');
 
     // --- Вспомогательные функции ---
 
     function showMessage(text, type) {
-      // type: 'success' или 'error'
       const el = document.getElementById('authMessage');
       el.textContent = text;
       el.className = 'auth-message ' + type;
     }
 
     function hideMessage() {
-      const el = document.getElementById('authMessage');
-      el.className = 'auth-message';
+      document.getElementById('authMessage').className = 'auth-message';
     }
 
     function setLoading(btnId, loading) {
-      // Блокируем кнопку во время запроса, чтобы не отправить дважды
       const btn = document.getElementById(btnId);
       btn.disabled = loading;
       btn.style.opacity = loading ? '0.6' : '1';
     }
 
-    // Переключение режимов (auth / forgot / reset)
-    function switchMode(mode) {
-      hideMessage();
-      document.getElementById('modeAuth').style.display = mode === 'auth' ? 'block' : 'none';
-      document.getElementById('modeForgot').style.display = mode === 'forgot' ? 'block' : 'none';
-      document.getElementById('modeReset').style.display = mode === 'reset' ? 'block' : 'none';
-    }
-
-    // Переключение вкладок внутри режима auth
     function switchTab(tab) {
       hideMessage();
       const isLogin = tab === 'login';
@@ -170,17 +115,16 @@
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
 
-      const { error } = await sbClient.auth.signInWithPassword({ email, password });
-
-      setLoading('btnLogin', false);
-
-      if (error) {
-        showMessage('Ошибка входа: ' + error.message, 'error');
-        return;
+      try {
+        // В Supabase: sbClient.auth.signInWithPassword({ email, password })
+        // В PocketBase: pb.collection('customers').authWithPassword(email, password)
+        // После успешного входа PocketBase автоматически сохраняет токен в localStorage.
+        await pb.collection('customers').authWithPassword(email, password);
+        window.location.href = 'index.html';
+      } catch (e) {
+        setLoading('btnLogin', false);
+        showMessage('Ошибка входа: неверный email или пароль', 'error');
       }
-
-      // Успешный вход — переходим на главную страницу
-      window.location.href = 'index.html';
     }
 
     async function handleRegister(e) {
@@ -191,7 +135,6 @@
       const password = document.getElementById('regPassword').value;
       const confirm = document.getElementById('regPasswordConfirm').value;
 
-      // Проверяем что пароли совпадают — до запроса к серверу
       if (password !== confirm) {
         showMessage('Пароли не совпадают', 'error');
         return;
@@ -199,102 +142,26 @@
 
       setLoading('btnRegister', true);
 
-      const { error } = await sbClient.auth.signUp({ email, password });
+      try {
+        // В Supabase регистрация была через sbClient.auth.signUp({ email, password }).
+        // В PocketBase создаём запись в коллекции customers.
+        // passwordConfirm — обязательное поле PocketBase при создании пользователя.
+        await pb.collection('customers').create({
+          email,
+          password,
+          passwordConfirm: confirm
+        });
 
-      setLoading('btnRegister', false);
-
-      if (error) {
-        showMessage('Ошибка регистрации: ' + error.message, 'error');
-        return;
-      }
-
-      // Supabase по умолчанию отправляет письмо для подтверждения email
-      showMessage('Аккаунт создан! Проверьте почту для подтверждения email.', 'success');
-    }
-
-    async function handleForgot(e) {
-      e.preventDefault();
-      hideMessage();
-      setLoading('btnForgot', true);
-
-      const email = document.getElementById('forgotEmail').value;
-
-      // redirectTo — куда Supabase перенаправит пользователя после клика по ссылке в письме
-      const { error } = await sbClient.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/login.html'
-      });
-
-      setLoading('btnForgot', false);
-
-      if (error) {
-        showMessage('Ошибка: ' + error.message, 'error');
-        return;
-      }
-
-      showMessage('Ссылка отправлена! Проверьте почту.', 'success');
-    }
-
-    async function handleReset(e) {
-      e.preventDefault();
-      hideMessage();
-
-      const password = document.getElementById('newPassword').value;
-      const confirm = document.getElementById('newPasswordConfirm').value;
-
-      if (password !== confirm) {
-        showMessage('Пароли не совпадают', 'error');
-        return;
-      }
-
-      setLoading('btnReset', true);
-
-      // Supabase уже авторизовал пользователя через токен из URL,
-      // поэтому просто обновляем пароль
-      const { error } = await sbClient.auth.updateUser({ password });
-
-      setLoading('btnReset', false);
-
-      if (error) {
-        showMessage('Ошибка: ' + error.message, 'error');
-        return;
-      }
-
-      showMessage('Пароль успешно изменён! Сейчас перенаправим вас...', 'success');
-
-      // Небольшая задержка, чтобы пользователь увидел сообщение об успехе
-      setTimeout(() => {
+        // После регистрации сразу логиним пользователя — чтобы не заставлять
+        // его вводить пароль повторно.
+        await pb.collection('customers').authWithPassword(email, password);
         window.location.href = 'index.html';
-      }, 2000);
-    }
-
-    // --- Инициализация: определяем режим при загрузке страницы ---
-
-    async function init() {
-      // Supabase передаёт тип события через хэш URL (#access_token=...&type=recovery)
-      // Нужно обработать его до того, как он исчезнет
-      const hash = window.location.hash;
-
-      if (hash.includes('type=recovery')) {
-        // Пользователь пришёл по ссылке восстановления пароля
-        // Supabase сам прочитает токен из хэша и создаст сессию
-        const { data, error } = await sbClient.auth.getSession();
-
-        if (data?.session) {
-          switchMode('reset');
-          return;
-        }
-      }
-
-      // Проверяем — вдруг пользователь уже залогинен?
-      // Если да, сразу отправляем его на главную страницу
-      const { data } = await sbClient.auth.getSession();
-      if (data?.session) {
-        window.location.href = 'index.html';
+      } catch (e) {
+        setLoading('btnRegister', false);
+        showMessage('Ошибка регистрации: ' + e.message, 'error');
       }
     }
 
-    // Переключение видимости пароля
-    // inputId — id поля, btn — кнопка-глаз (чтобы менять её вид)
     function togglePassword(inputId, btn) {
       const input = document.getElementById(inputId);
       const isHidden = input.type === 'password';
@@ -302,9 +169,16 @@
       btn.textContent = isHidden ? '🙈' : '👁';
     }
 
-    // Инициализируем тему (берём из localStorage, если есть)
-    const storedTheme = localStorage.getItem('paycontrol_theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', storedTheme);
+    // Инициализация: если пользователь уже залогинен — сразу на главную.
+    // В Supabase была асинхронная getSession(), в PocketBase — мгновенная проверка isValid.
+    function init() {
+      const storedTheme = localStorage.getItem('paycontrol_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', storedTheme);
+
+      if (pb.authStore.isValid) {
+        window.location.href = 'index.html';
+      }
+    }
 
     init();
   </script>
