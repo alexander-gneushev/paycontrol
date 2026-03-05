@@ -259,7 +259,8 @@ body {
 
 @media (min-width: 720px) {
   .dashboard {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* Блок "Активные обязательства" получает больше места за счёт сужения блока "Ближайший платёж" */
+    grid-template-columns: 1fr 0.75fr 1.5fr;
   }
 }
 
@@ -351,11 +352,11 @@ body {
 
 .category-tabs {
   display: flex;
-  /* На десктопе не переносим — все 5 табов в одну строку.
-     flex-wrap: wrap включается только в медиазапросе для мобильных. */
   flex-wrap: nowrap;
   gap: 4px;
   margin-top: 4px;
+  /* overflow: hidden скрывает табы которые не влезли — но мы не допустим этого
+     за счёт правильных размеров */
   overflow: hidden;
 }
 
@@ -363,18 +364,43 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  /* Уменьшенный padding чтобы все 5 табов влезли в одну строку */
-  padding: 4px 8px;
+  padding: 4px 7px;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.2);
   background: rgba(15, 23, 42, 0.6);
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
+  /* flex: 1 распределяет доступное пространство равномерно между всеми пятью табами */
+  flex: 1;
+  justify-content: center;
   transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
   font-family: inherit;
+}
+
+/* Счётчики видны везде — и на десктопе и на мобильных */
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 3px;
+}
+
+.category-tab:not(.active) .tab-count {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+[data-theme='light'] .category-tab:not(.active) .tab-count {
+  background: rgba(0, 0, 0, 0.08);
+  color: #374151;
 }
 
 .category-tab:hover {
@@ -390,22 +416,7 @@ body {
   box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
 }
 
-.tab-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.2);
-  font-size: 10px;
-  font-weight: 700;
-  padding: 0 4px;
-}
-
-.category-tab:not(.active) .tab-count {
-  background: rgba(148, 163, 184, 0.15);
-}
+/* .tab-count базовые стили перенесены выше, в блок табов */
 
 [data-theme='light'] .category-tab {
   background: #f3f4f6;
@@ -445,6 +456,11 @@ body {
 
 .form-card {
   padding-bottom: 18px;
+  /* height: 100% заставляет карточку растягиваться на всю высоту Grid-ячейки.
+     Grid выравнивает обе колонки по высоте самого высокого блока ("Список платежей"),
+     а form-card заполняет эту ячейку целиком. */
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .form {
@@ -641,16 +657,18 @@ input[type='date']::-webkit-calendar-picker-indicator {
   border-radius: calc(var(--radius-lg) - 4px);
   background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.32), rgba(15, 23, 42, 0.96));
   border: 1px solid rgba(148, 163, 184, 0.45);
-  /* overflow: hidden убран — он блокировал скролл на десктопе */
-  overflow: visible;
+  /* На мобильных overflow: hidden чтобы таблица не вылезала за края карточки.
+     На десктопе overflow-y: auto задаётся в медиазапросе выше. */
+  overflow: hidden;
 }
 
-/* Десктоп: фиксированная высота враппера = thead + 5 строк tbody.
-   thead ~37px + 5 строк * 43px = ~252px.
-   Скролл появляется на 6-й строке, блок не сжимается при меньшем количестве. */
+/* Десктоп: max-height враппера = thead (~37px) + 5 строк * 91px.
+   Реальная высота строки 91px — замерена через DevTools (padding 9px + content 72px + border 1px).
+   Блок растёт свободно до 5 строк, на 6-й фиксируется и появляется скролл.
+   Grid автоматически тянет соседний блок "Добавить платёж" до той же высоты. */
 @media (min-width: 769px) {
   .table-wrapper {
-    height: calc(37px + 5 * 43px);
+    max-height: calc(37px + 5 * 91px);
     overflow-y: auto;
   }
 }
