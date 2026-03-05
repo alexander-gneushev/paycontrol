@@ -641,42 +641,39 @@ input[type='date']::-webkit-calendar-picker-indicator {
   border-radius: calc(var(--radius-lg) - 4px);
   background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.32), rgba(15, 23, 42, 0.96));
   border: 1px solid rgba(148, 163, 184, 0.45);
-  overflow: hidden;
+  /* overflow: hidden убран — он блокировал скролл на десктопе */
+  overflow: visible;
 }
 
-/* Ограничение высоты таблицы — показывает 5 строк, скролл появляется на 6-й.
-   Фактическая высота строки ~43px (9px padding сверху + 9px снизу + ~25px контент).
-   Умножаем на 5 чтобы ровно 5 строк были видны без скролла. */
-.payments-table tbody {
-  display: block;
-  /* height фиксирует высоту жёстко — блок всегда занимает место под 5 строк.
-     При меньшем количестве строк снизу остаётся пустое место.
-     При большем — появляется скролл. max-height здесь не подходит
-     потому что он позволяет блоку сжиматься когда строк мало. */
-  height: calc(5 * 44px);
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
+/* Десктоп: фиксированная высота враппера = thead + 5 строк tbody.
+   thead ~37px + 5 строк * 43px = ~252px.
+   Скролл появляется на 6-й строке, блок не сжимается при меньшем количестве. */
+@media (min-width: 769px) {
+  .table-wrapper {
+    height: calc(37px + 5 * 43px);
+    overflow-y: auto;
+  }
 }
 
-.payments-table tbody::-webkit-scrollbar {
+/* Скроллбар на десктопе — стилизуем враппер */
+.table-wrapper::-webkit-scrollbar {
   width: 4px;
 }
 
-.payments-table tbody::-webkit-scrollbar-track {
+.table-wrapper::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.payments-table tbody::-webkit-scrollbar-thumb {
+.table-wrapper::-webkit-scrollbar-thumb {
   background: rgba(99, 102, 241, 0.4);
   border-radius: 999px;
 }
 
-.payments-table thead,
-.payments-table tbody tr {
-  display: table;
-  width: 100%;
-  table-layout: fixed;
+@media (min-width: 769px) {
+  .table-wrapper {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
+  }
 }
 
 .payments-table {
