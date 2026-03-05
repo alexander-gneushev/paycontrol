@@ -1,10 +1,8 @@
 (function () {
-  // Инициализация PocketBase — подключаемся к нашему серверу.
-  // В Supabase был отдельный URL и anon key, здесь только URL нашего сервера.
-  // PocketBase сам хранит токен авторизации в localStorage и добавляет его к каждому запросу.
   const pb = new PocketBase('https://paycontrol.dcmr.ru/pb');
 
   const form = document.getElementById('paymentForm');
+  const formMobile = document.getElementById('paymentFormMobile');
   const paymentsBody = document.getElementById('paymentsBody');
   const tableEmptyState = document.getElementById('tableEmptyState');
   const totalMonthlyEl = document.getElementById('totalMonthly');
@@ -21,17 +19,58 @@
   const themeToggleBtn = document.getElementById('themeToggle');
   const telegramNotifyBtn = document.getElementById('telegramNotify');
 
+  // Кнопка "+" и модалка добавления платежа на мобильных
+  const addPaymentMobileBtn = document.getElementById('addPaymentMobileBtn');
+  const addPaymentModal = document.getElementById('addPaymentModal');
+  const addPaymentModalClose = document.getElementById('addPaymentModalClose');
+
   let payments = [];
   let currentEditingId = null;
-
-  // currentUser — данные залогиненного пользователя.
-  // В Supabase это был session.user, в PocketBase это pb.authStore.model —
-  // объект с полями id, email, telegram_chat_id и т.д.
+  // Текущий активный фильтр категории. 'all' — показывать все платежи.
+  let activeCategory = 'all';
   let currentUser = null;
 
   const submitBtn = form.querySelector('button[type="submit"]');
 
-  // Обработчик отправки формы — без изменений в логике, только вызовы функций те же
+  // --- Мобильная модалка добавления платежа ---
+
+  addPaymentMobileBtn.addEventListener('click', () => {
+    addPaymentModal.classList.add('active');
+    formMobile.reset();
+  });
+
+  addPaymentModalClose.addEventListener('click', () => {
+    addPaymentModal.classList.remove('active');
+  });
+
+  addPaymentModal.addEventListener('click', (e) => {
+    if (e.target === addPaymentModal) addPaymentModal.classList.remove('active');
+  });
+
+  // Обработчик мобильной формы — логика та же что и у десктопной,
+  // после сохранения модалка закрывается автоматически.
+  formMobile.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const formData = new FormData(formMobile);
+    const name = String(formData.get('name') || '').trim();
+    const amount = Number(formData.get('amount') || 0);
+    const date = String(formData.get('date') || '');
+    const category = String(formData.get('category') || 'other');
+
+    if (!name || !date || !amount || amount <= 0) {
+      alert('Проверьте корректность введённых данных.');
+      return;
+    }
+
+    const newPayment = await savePayment({ name, amount, date, category });
+    if (newPayment) {
+      await loadPayments();
+      addPaymentModal.classList.remove('active');
+    }
+  });
+
+  // --- Десктопная форма ---
+
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
 
@@ -72,6 +111,21 @@
     renderTable(searchInput.value);
   });
 
+  // --- Табы фильтрации категорий ---
+
+  const categoryTabs = document.querySelectorAll('.category-tab');
+
+  categoryTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Убираем активный класс со всех табов и ставим на нажатый
+      categoryTabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeCategory = tab.dataset.category;
+      // Перерисовываем таблицу с учётом нового фильтра
+      renderTable(searchInput.value);
+    });
+  });
+
   // --- Telegram модальное окно ---
 
   const telegramModal = document.getElementById('telegramModal');
@@ -89,10 +143,6 @@
     editTelegramIdBtn.style.display = locked ? 'inline-flex' : 'none';
   }
 
-  // Открыть модальное окно.
-  // В Supabase telegram_chat_id хранился в отдельной таблице profiles и нужен был отдельный запрос.
-  // В PocketBase это просто поле на записи пользователя — pb.authStore.model.telegram_chat_id.
-  // Данные уже есть в памяти, запрос к серверу не нужен.
   telegramNotifyBtn.addEventListener('click', () => {
     telegramModal.classList.add('active');
     telegramStatus.textContent = '';
@@ -124,9 +174,6 @@
     if (e.target === telegramModal) telegramModal.classList.remove('active');
   });
 
-  // Сохранить telegram_chat_id.
-  // В Supabase делали upsert в таблицу profiles.
-  // В PocketBase просто обновляем запись пользователя в коллекции customers.
   saveTelegramIdBtn.addEventListener('click', async () => {
     const chatId = parseInt(telegramChatIdInput.value);
 
@@ -139,12 +186,10 @@
     saveTelegramIdBtn.disabled = true;
 
     try {
-      // Обновляем поле telegram_chat_id у текущего пользователя в коллекции customers
       await pb.collection('customers').update(currentUser.id, {
         telegram_chat_id: chatId
       });
 
-      // Обновляем локальный кэш authStore, чтобы не делать лишний запрос
       pb.authStore.model.telegram_chat_id = chatId;
 
       setInputLocked(true);
@@ -173,10 +218,6 @@
 
   async function loadPayments() {
     try {
-      // В Supabase фильтрация по user_id происходила автоматически через RLS.
-      // В PocketBase мы явно указываем фильтр: поле user должно совпадать с ID текущего пользователя.
-      // @request.auth.id — это специальная переменная PocketBase, которая читается из токена авторизации.
-      // Это безопасно: подделать токен клиент не может, значит нельзя запросить чужие платежи.
       const records = await pb.collection('payments').getFullList({
         filter: `user = "${currentUser.id}"`,
         sort: 'payment_date'
@@ -186,7 +227,6 @@
         id: payment.id,
         name: payment.name,
         amount: payment.amount,
-        // В Supabase поле называлось payment_date, в PocketBase мы тоже назвали его payment_date
         date: payment.payment_date,
         category: payment.category,
         categoryLabel: categoryLabel(payment.category)
@@ -201,8 +241,6 @@
 
   async function savePayment(paymentData) {
     try {
-      // В Supabase передавали user_id как UUID.
-      // В PocketBase поле называется user и содержит ID записи из коллекции customers.
       const record = await pb.collection('payments').create({
         name: paymentData.name,
         amount: paymentData.amount,
@@ -210,7 +248,6 @@
         category: paymentData.category,
         user: currentUser.id
       });
-
       return record;
     } catch (e) {
       console.error('Ошибка при сохранении:', e);
@@ -221,16 +258,12 @@
 
   async function updatePayment(id, paymentData) {
     try {
-      // ID в PocketBase — это строка вида "abc123xyz789" (15 символов).
-      // В Supabase был числовой bigint, parseInt() здесь не нужен.
       const record = await pb.collection('payments').update(id, {
         name: paymentData.name,
         amount: paymentData.amount,
         payment_date: paymentData.date,
         category: paymentData.category
-        // user не трогаем — он уже правильно установлен при создании
       });
-
       return record;
     } catch (e) {
       console.error('Ошибка при обновлении:', e);
@@ -248,11 +281,9 @@
     }
   }
 
-  // --- Dashboard и рендеринг таблицы — без изменений ---
+  // --- Dashboard ---
 
   function updateDashboard() {
-    const now = new Date();
-
     const total = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
     totalMonthlyEl.textContent = formatCurrency(total);
 
@@ -281,16 +312,25 @@
     countOtherEl.textContent = counts.other;
   }
 
+  // --- Рендеринг таблицы ---
+
   function renderTable(filterValue) {
     paymentsBody.innerHTML = '';
 
     const normalizedFilter = (filterValue || '').trim().toLowerCase();
-    const filtered = normalizedFilter
+
+    // Сначала фильтруем по тексту поиска
+    let filtered = normalizedFilter
       ? payments.filter((p) => {
           const text = (p.name + ' ' + p.categoryLabel).toLowerCase();
           return text.includes(normalizedFilter);
         })
       : payments;
+
+    // Затем фильтруем по активной категории (если выбрана не 'all')
+    if (activeCategory !== 'all') {
+      filtered = filtered.filter(p => p.category === activeCategory);
+    }
 
     if (filtered.length === 0) {
       tableEmptyState.style.display = 'flex';
@@ -424,9 +464,6 @@
 
   // --- Авторизация ---
 
-  // Выход из аккаунта.
-  // В Supabase: supabase.auth.signOut() — запрос к серверу для инвалидации токена.
-  // В PocketBase: pb.authStore.clear() — просто очищаем токен из localStorage, без запроса.
   async function signOut() {
     pb.authStore.clear();
     window.location.href = 'login.html';
@@ -454,10 +491,6 @@
     currentYearEl.textContent = new Date().getFullYear();
     initTheme();
 
-    // Проверяем авторизацию.
-    // В Supabase: supabase.auth.getSession() — асинхронный запрос.
-    // В PocketBase: pb.authStore.isValid — мгновенная синхронная проверка токена из localStorage.
-    // Если токен есть и не просрочен — пользователь считается залогиненным.
     if (!pb.authStore.isValid) {
       window.location.href = 'login.html';
       return;
@@ -470,4 +503,3 @@
 
   document.addEventListener('DOMContentLoaded', init);
 })();
-// тест автодеплоя

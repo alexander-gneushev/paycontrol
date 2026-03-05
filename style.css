@@ -23,21 +23,21 @@
 }
 
 [data-theme='light'] {
-  --bg: #f5f5f5;
+  --bg: #e8eaf0;
   --bg-elevated: #ffffff;
-  --bg-elevated-soft: #f9fafb;
-  --border-subtle: rgba(0, 0, 0, 0.06);
-  --accent: #6366f1;
-  --accent-soft: rgba(99, 102, 241, 0.08);
+  --bg-elevated-soft: #f3f4f6;
+  --border-subtle: rgba(0, 0, 0, 0.12);
+  --accent: #4f46e5;
+  --accent-soft: rgba(79, 70, 229, 0.12);
   --accent-strong: #3730a3;
-  --text: #1a1a1a;
-  --text-muted: #4b5563;
-  --text-soft: #9ca3af;
+  --text: #111827;
+  --text-muted: #374151;
+  --text-soft: #6b7280;
   --danger: #dc2626;
-  --danger-soft: rgba(220, 38, 38, 0.08);
-  --success: #16a34a;
-  --success-soft: rgba(22, 163, 74, 0.08);
-  --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.12);
+  --danger-soft: rgba(220, 38, 38, 0.1);
+  --success: #15803d;
+  --success-soft: rgba(21, 128, 61, 0.1);
+  --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.15);
 }
 
 *,
@@ -96,9 +96,9 @@ body {
 }
 
 [data-theme='light'] .app-header {
-  background: linear-gradient(135deg, #d1d5db, #9ca3af);
-  border-color: rgba(107, 114, 128, 0.7);
-  box-shadow: 0 16px 40px rgba(107, 114, 128, 0.5);
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  border-color: rgba(79, 70, 229, 0.5);
+  box-shadow: 0 16px 40px rgba(79, 70, 229, 0.3);
 }
 
 @supports not (backdrop-filter: blur(0)) {
@@ -147,7 +147,7 @@ body {
 
 [data-theme='light'] .logo-title,
 [data-theme='light'] .logo-subtitle {
-  color: #1a1a1a;
+  color: #ffffff;
 }
 
 .header-actions {
@@ -204,43 +204,39 @@ body {
   border-color: rgba(148, 163, 184, 0.7);
 }
 
+/* В светлой теме кнопки хедера на фиолетовом фоне — белые */
+[data-theme='light'] .app-header .btn-ghost {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+[data-theme='light'] .app-header .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.8);
+  color: #ffffff;
+}
+
+/* Кнопки вне хедера в светлой теме */
 [data-theme='light'] .btn-primary {
-  background: linear-gradient(135deg, #a5b4fc, #c7d2fe);
-  border-color: rgba(129, 140, 248, 0.7);
-  box-shadow: 0 8px 20px rgba(129, 140, 248, 0.4);
-  color: #1f2937;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+  color: #ffffff;
 }
 
-[data-theme='light'] .btn-ghost {
+[data-theme='light'] .form-card .btn-ghost,
+[data-theme='light'] .modal .btn-ghost {
   border-color: #d1d5db;
   background: #ffffff;
   color: #374151;
 }
 
-[data-theme='light'] .btn-ghost:hover {
+[data-theme='light'] .form-card .btn-ghost:hover,
+[data-theme='light'] .modal .btn-ghost:hover {
   background: #f3f4f6;
-  color: #1a1a1a;
+  color: #111827;
   border-color: #9ca3af;
-}
-
-[data-theme='light'] #themeToggle.btn-ghost {
-  border-color: #d1d5db;
-  color: #374151;
-  background: #ffffff;
-}
-
-[data-theme='light'] #themeToggle.btn-ghost:hover {
-  background: #f3f4f6;
-}
-
-[data-theme='light'] #telegramNotify.btn-ghost {
-  border-color: #d1d5db;
-  color: #374151;
-  background: #ffffff;
-}
-
-[data-theme='light'] #telegramNotify.btn-ghost:hover {
-  background: #f3f4f6;
 }
 
 .btn:active {
@@ -277,6 +273,12 @@ body {
   overflow: hidden;
 }
 
+[data-theme='light'] .card {
+  background: var(--bg-elevated);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
 .card::before {
   content: '';
   position: absolute;
@@ -286,6 +288,10 @@ body {
   mix-blend-mode: screen;
   opacity: 0.7;
   pointer-events: none;
+}
+
+[data-theme='light'] .card::before {
+  display: none;
 }
 
 .card-header {
@@ -310,6 +316,7 @@ body {
 
 [data-theme='light'] .card-title {
   color: #374151;
+  font-weight: 600;
 }
 
 .card-value {
@@ -327,61 +334,96 @@ body {
 }
 
 [data-theme='light'] .card-meta {
-  color: #6b7280;
+  color: #4b5563;
 }
 
 [data-theme='light'] .card-value {
-  color: #1a1a1a;
+  color: #111827;
 }
 
 [data-theme='light'] .app-footer {
-  color: #6b7280;
+  color: #4b5563;
 }
 
-.tags {
-  position: relative;
+/* ============================================
+   Табы фильтрации категорий
+   ============================================ */
+
+.category-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   margin-top: 4px;
 }
 
-.tag {
-  padding: 4px 8px;
+.category-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.6);
   color: var(--text-muted);
-  font-size: 11px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+  font-family: inherit;
 }
 
-[data-theme='light'] .tags .tag {
-  color: #111827;
-  border-color: rgba(0, 0, 0, 0.12);
+.category-tab:hover {
+  background: rgba(79, 70, 229, 0.2);
+  border-color: rgba(99, 102, 241, 0.5);
+  color: var(--text);
 }
 
-[data-theme='light'] .tags .tag:nth-child(1) {
-  background: #dbeafe;
-  color: #1d4ed8;
-  border-color: #93c5fd;
+.category-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
 }
 
-[data-theme='light'] .tags .tag:nth-child(2) {
-  background: #dcfce7;
-  color: #15803d;
-  border-color: #86efac;
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 0 4px;
 }
 
-[data-theme='light'] .tags .tag:nth-child(3) {
-  background: #fee2e2;
-  color: #b91c1c;
-  border-color: #fecaca;
+.category-tab:not(.active) .tab-count {
+  background: rgba(148, 163, 184, 0.15);
 }
 
-[data-theme='light'] .tags .tag:nth-child(4) {
-  background: #e5e7eb;
-  color: #374151;
+[data-theme='light'] .category-tab {
+  background: #f3f4f6;
   border-color: #d1d5db;
+  color: #374151;
+}
+
+[data-theme='light'] .category-tab:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+  color: #3730a3;
+}
+
+[data-theme='light'] .category-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+}
+
+[data-theme='light'] .category-tab:not(.active) .tab-count {
+  background: rgba(0, 0, 0, 0.08);
+  color: #374151;
 }
 
 .layout-two-column {
@@ -413,8 +455,6 @@ body {
   gap: 6px;
 }
 
-/* Удалены классы field-control */
-
 .form-row label {
   font-size: 12px;
   text-transform: uppercase;
@@ -428,6 +468,7 @@ body {
 
 [data-theme='light'] .form-row label {
   color: #374151;
+  font-weight: 600;
 }
 
 input,
@@ -449,8 +490,15 @@ select {
 [data-theme='light'] input,
 [data-theme='light'] select {
   background: #ffffff;
-  border-color: #d0d0d0;
-  color: #1a1a1a;
+  border-color: #c4c9d4;
+  color: #111827;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme='light'] input:focus,
+[data-theme='light'] select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 input::placeholder {
@@ -480,9 +528,6 @@ select {
 }
 
 [data-theme='light'] select {
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath fill='%234b5563' d='M8 10L2 4h12z'/%3E%3C/svg%3E");
 }
 
@@ -508,7 +553,6 @@ input[type='date']::-webkit-calendar-picker-indicator {
   filter: none;
 }
 
-/* Мобильная версия */
 @media (max-width: 768px) {
   select {
     background-position: right 12px center;
@@ -551,14 +595,32 @@ input[type='date']::-webkit-calendar-picker-indicator {
   gap: 8px;
 }
 
+/* Кнопка "+" — видна только на мобильных */
+.add-payment-mobile-btn {
+  display: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@media (max-width: 879px) {
+  .add-payment-mobile-btn {
+    display: inline-flex;
+  }
+}
+
 .search-input {
   min-width: 0;
-  width: 160px;
+  width: 140px;
 }
 
 @media (min-width: 720px) {
   .search-input {
-    width: 220px;
+    width: 200px;
   }
 }
 
@@ -568,6 +630,35 @@ input[type='date']::-webkit-calendar-picker-indicator {
   background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.32), rgba(15, 23, 42, 0.96));
   border: 1px solid rgba(148, 163, 184, 0.45);
   overflow: hidden;
+}
+
+/* Ограничение высоты таблицы — показывает 5 строк, остальное прокручивается */
+.payments-table tbody {
+  display: block;
+  max-height: calc(5 * 42px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.4) transparent;
+}
+
+.payments-table tbody::-webkit-scrollbar {
+  width: 4px;
+}
+
+.payments-table tbody::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.payments-table tbody::-webkit-scrollbar-thumb {
+  background: rgba(99, 102, 241, 0.4);
+  border-radius: 999px;
+}
+
+.payments-table thead,
+.payments-table tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
 }
 
 .payments-table {
@@ -607,6 +698,19 @@ input[type='date']::-webkit-calendar-picker-indicator {
   background: rgba(79, 70, 229, 0.8);
 }
 
+[data-theme='light'] .table-wrapper {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+}
+
+[data-theme='light'] .payments-table thead {
+  background: #f3f4f6;
+}
+
+[data-theme='light'] .payments-table th {
+  color: #374151;
+}
+
 [data-theme='light'] .payments-table tbody tr:nth-child(odd) {
   background: #ffffff;
 }
@@ -616,7 +720,16 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 
 [data-theme='light'] .payments-table tbody tr:hover {
-  background: #e5e7eb;
+  background: #e8edf8;
+}
+
+[data-theme='light'] .payments-table td {
+  color: #111827;
+  border-bottom-color: #e5e7eb;
+}
+
+[data-theme='light'] .payments-table tbody::-webkit-scrollbar-thumb {
+  background: rgba(79, 70, 229, 0.3);
 }
 
 .table-actions-cell {
@@ -666,18 +779,18 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 [data-theme='light'] .icon-btn-edit:hover {
   background: var(--accent-soft);
-  border-color: rgba(99, 102, 241, 0.7);
+  border-color: rgba(79, 70, 229, 0.7);
   color: var(--accent);
   transform: translateY(-0.5px);
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
 }
 
 [data-theme='light'] .icon-btn-success:hover {
   background: var(--success-soft);
-  border-color: rgba(22, 163, 74, 0.7);
+  border-color: rgba(21, 128, 61, 0.7);
   color: var(--success);
   transform: translateY(-0.5px);
-  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
+  box-shadow: 0 8px 20px rgba(21, 128, 61, 0.25);
 }
 
 .icon-btn-edit {
@@ -688,14 +801,6 @@ input[type='date']::-webkit-calendar-picker-indicator {
   background: var(--accent-soft);
   border-color: rgba(129, 140, 248, 0.7);
   color: var(--accent-strong);
-  transform: translateY(-0.5px);
-  box-shadow: 0 8px 20px rgba(129, 140, 248, 0.35);
-}
-
-[data-theme='dark'] .icon-btn-edit:hover {
-  background: var(--accent-soft);
-  border-color: rgba(129, 140, 248, 0.7);
-  color: var(--accent);
   transform: translateY(-0.5px);
   box-shadow: 0 8px 20px rgba(129, 140, 248, 0.35);
 }
@@ -712,31 +817,19 @@ input[type='date']::-webkit-calendar-picker-indicator {
   box-shadow: 0 8px 20px rgba(74, 222, 128, 0.35);
 }
 
-[data-theme='dark'] .icon-btn-success:hover {
-  background: var(--success-soft);
-  border-color: rgba(74, 222, 128, 0.7);
-  color: var(--success);
-  transform: translateY(-0.5px);
-  box-shadow: 0 8px 20px rgba(74, 222, 128, 0.35);
-}
-
-[data-theme='dark'] .icon-btn-danger:hover {
-  background: var(--danger-soft);
-  border-color: rgba(248, 113, 113, 0.6);
-  color: var(--danger);
-  transform: translateY(-0.5px);
-  box-shadow: 0 8px 20px rgba(248, 113, 113, 0.35);
-}
-
 .row-paid td:not(.table-actions-cell) {
   color: var(--text-soft);
   text-decoration: line-through;
 }
 
+/* Красная обводка просроченных платежей */
 .row-warning {
-  box-shadow:
-    inset 0 0 0 2px rgba(248, 113, 113, 0.95),
-    0 0 0 2px rgba(15, 23, 42, 0.95);
+  box-shadow: inset 0 0 0 2px rgba(248, 113, 113, 0.95);
+}
+
+/* В светлой теме — более жирная и насыщенная обводка */
+[data-theme='light'] .row-warning {
+  box-shadow: inset 0 0 0 3px #dc2626;
 }
 
 .warning-icon {
@@ -754,6 +847,10 @@ input[type='date']::-webkit-calendar-picker-indicator {
   justify-content: center;
 }
 
+[data-theme='light'] .table-empty {
+  color: #4b5563;
+}
+
 .app-footer {
   margin-top: 18px;
   padding-top: 10px;
@@ -764,6 +861,10 @@ input[type='date']::-webkit-calendar-picker-indicator {
   gap: 6px;
   font-size: 11px;
   color: var(--text-soft);
+}
+
+[data-theme='light'] .app-footer {
+  border-top-color: #d1d5db;
 }
 
 .footer-hint {
@@ -793,29 +894,33 @@ input[type='date']::-webkit-calendar-picker-indicator {
     grid-template-columns: 1fr;
   }
 
+  /* На мобильных форма скрыта — добавление через модалку по кнопке "+" */
   .layout-two-column {
     display: flex;
-    flex-direction: column-reverse;
+    flex-direction: column;
+  }
+
+  .form-card {
+    display: none;
   }
 
   .card {
     padding: 14px 14px 12px;
   }
 
-  /* Mobile table card layout */
-  .payments-table {
-    display: block;
-  }
-
+  /* Мобильная таблица — карточный вид */
   .payments-table thead {
     display: none;
   }
 
+  /* Сбрасываем ограничение высоты на мобильных — карточки видны целиком */
   .payments-table tbody {
     display: block;
+    max-height: none;
+    overflow-y: visible;
   }
 
-  .payments-table tr {
+  .payments-table tbody tr {
     display: block;
     background: var(--bg-elevated);
     border: 1px solid var(--border-subtle);
@@ -823,6 +928,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
     padding: 16px;
     margin-bottom: 12px;
     position: relative;
+    width: 100%;
   }
 
   .payments-table td {
@@ -874,11 +980,20 @@ input[type='date']::-webkit-calendar-picker-indicator {
   }
 
   [data-theme='light'] .payments-table td:first-child {
-    color: #1a1a1a;
+    color: #111827;
   }
 
   [data-theme='light'] .payments-table td:nth-child(4) {
-    color: #6b7280;
+    color: #4b5563;
+  }
+
+  /* Красная обводка на мобильных карточках */
+  .row-warning {
+    box-shadow: inset 0 0 0 2px rgba(248, 113, 113, 0.9), 0 0 0 1px rgba(248, 113, 113, 0.4);
+  }
+
+  [data-theme='light'] .row-warning {
+    box-shadow: inset 0 0 0 3px #dc2626;
   }
 }
 
@@ -911,12 +1026,22 @@ input[type='date']::-webkit-calendar-picker-indicator {
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
 }
 
+[data-theme='light'] .modal {
+  background: #ffffff;
+  border-color: #e5e7eb;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.15);
+}
+
 .modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px 16px;
   border-bottom: 1px solid var(--border-subtle);
+}
+
+[data-theme='light'] .modal-header {
+  border-bottom-color: #e5e7eb;
 }
 
 .modal-title {
@@ -946,6 +1071,38 @@ input[type='date']::-webkit-calendar-picker-indicator {
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+/* Модалка формы добавления — меньший gap */
+.modal-body-form {
+  gap: 0;
+  padding: 20px 24px 24px;
+}
+
+/* Информационная сноска в Telegram-модалке */
+.modal-info-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  font-size: 13px;
+  color: var(--accent-strong);
+  line-height: 1.5;
+}
+
+.modal-info-note::before {
+  content: 'ℹ️';
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+[data-theme='light'] .modal-info-note {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #3730a3;
 }
 
 .modal-step {
@@ -983,6 +1140,10 @@ input[type='date']::-webkit-calendar-picker-indicator {
   line-height: 1.5;
 }
 
+[data-theme='light'] .modal-step p {
+  color: #4b5563;
+}
+
 .modal-step code {
   background: rgba(99, 102, 241, 0.15);
   border: 1px solid rgba(99, 102, 241, 0.3);
@@ -990,6 +1151,12 @@ input[type='date']::-webkit-calendar-picker-indicator {
   padding: 1px 6px;
   font-size: 12px;
   color: var(--accent-strong);
+}
+
+[data-theme='light'] .modal-step code {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #3730a3;
 }
 
 .modal-tg-link {
@@ -1023,7 +1190,7 @@ input[type='date']::-webkit-calendar-picker-indicator {
 
 .modal-input-row .input-wrap input {
   width: 100%;
-  padding-right: 36px; /* место для карандаша */
+  padding-right: 36px;
 }
 
 .modal-input-row .input-wrap #editTelegramId {
@@ -1059,26 +1226,13 @@ input[type='date']::-webkit-calendar-picker-indicator {
   color: var(--danger);
 }
 
-/* Анимации для уведомлений */
+/* Анимации */
 @keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 @keyframes slideOut {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
-  }
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(100%); opacity: 0; }
 }
-
