@@ -470,3 +470,4 @@
 
   document.addEventListener('DOMContentLoaded', init);
 })();
+// тест автодеплоя
