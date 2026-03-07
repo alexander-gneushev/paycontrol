@@ -67,6 +67,51 @@
           </div>
           <button class="btn btn-primary btn-auth" type="submit" id="btnRegister">Создать аккаунт</button>
         </form>
+
+        <!-- Ссылка "Забыли пароль?" под формой входа -->
+        <div class="auth-footer-link" id="forgotLink">
+          <a onclick="switchMode('forgot')">Забыли пароль?</a>
+        </div>
+      </div>
+
+      <!-- РЕЖИМ 2: Запрос сброса пароля -->
+      <div id="modeForgot" style="display:none;">
+        <div class="auth-title">Восстановление пароля</div>
+        <p style="text-align:center; color: var(--text-secondary); font-size:14px; margin-bottom:20px;">
+          Введите email — мы отправим ссылку для сброса пароля
+        </p>
+        <form class="auth-form" id="formForgot" onsubmit="handleForgot(event)">
+          <div class="form-row">
+            <label for="forgotEmail">Email</label>
+            <input id="forgotEmail" type="email" placeholder="your@email.com" required />
+          </div>
+          <button class="btn btn-primary btn-auth" type="submit" id="btnForgot">Отправить письмо</button>
+        </form>
+        <div class="auth-footer-link">
+          <a onclick="switchMode('auth')">← Вернуться ко входу</a>
+        </div>
+      </div>
+
+      <!-- РЕЖИМ 3: Установка нового пароля (по ссылке из письма) -->
+      <div id="modeReset" style="display:none;">
+        <div class="auth-title">Новый пароль</div>
+        <form class="auth-form" id="formReset" onsubmit="handleReset(event)">
+          <div class="form-row">
+            <label for="resetPassword">Новый пароль</label>
+            <div class="password-wrap">
+              <input id="resetPassword" type="password" placeholder="Минимум 8 символов" minlength="8" required />
+              <button type="button" class="eye-btn" onclick="togglePassword('resetPassword', this)" tabindex="-1">👁</button>
+            </div>
+          </div>
+          <div class="form-row">
+            <label for="resetPasswordConfirm">Подтвердите пароль</label>
+            <div class="password-wrap">
+              <input id="resetPasswordConfirm" type="password" placeholder="Повторите пароль" required />
+              <button type="button" class="eye-btn" onclick="togglePassword('resetPasswordConfirm', this)" tabindex="-1">👁</button>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-auth" type="submit" id="btnReset">Сохранить пароль</button>
+        </form>
       </div>
 
     </div>
@@ -171,12 +216,88 @@
 
     // Инициализация: если пользователь уже залогинен — сразу на главную.
     // В Supabase была асинхронная getSession(), в PocketBase — мгновенная проверка isValid.
+    // --- Переключение режимов (вход/регистрация, забыл пароль, сброс пароля) ---
+
+    function switchMode(mode) {
+      hideMessage();
+      document.getElementById('modeAuth').style.display   = mode === 'auth'   ? 'block' : 'none';
+      document.getElementById('modeForgot').style.display = mode === 'forgot' ? 'block' : 'none';
+      document.getElementById('modeReset').style.display  = mode === 'reset'  ? 'block' : 'none';
+    }
+
+    // --- Запрос сброса пароля ---
+
+    async function handleForgot(e) {
+      e.preventDefault();
+      hideMessage();
+      setLoading('btnForgot', true);
+
+      const email = document.getElementById('forgotEmail').value;
+
+      try {
+        // PocketBase отправляет письмо со ссылкой на сброс пароля.
+        // Ссылка будет вести на наш login.html?token=... (настраивается в Pocketbase Admin).
+        await pb.collection('customers').requestPasswordReset(email);
+        showMessage('Письмо отправлено! Проверьте почту.', 'success');
+        setLoading('btnForgot', false);
+      } catch (e) {
+        setLoading('btnForgot', false);
+        showMessage('Ошибка: ' + e.message, 'error');
+      }
+    }
+
+    // --- Сохранение нового пароля ---
+
+    async function handleReset(e) {
+      e.preventDefault();
+      hideMessage();
+
+      const password = document.getElementById('resetPassword').value;
+      const confirm  = document.getElementById('resetPasswordConfirm').value;
+
+      if (password !== confirm) {
+        showMessage('Пароли не совпадают', 'error');
+        return;
+      }
+
+      setLoading('btnReset', true);
+
+      try {
+        // Читаем токен из URL: login.html?token=XXXXX
+        const params = new URLSearchParams(window.location.search);
+        const token  = params.get('token');
+
+        if (!token) {
+          showMessage('Ссылка недействительна или устарела', 'error');
+          setLoading('btnReset', false);
+          return;
+        }
+
+        await pb.collection('customers').confirmPasswordReset(token, password, confirm);
+        showMessage('Пароль успешно изменён!', 'success');
+
+        // Через 2 секунды переходим на страницу входа
+        setTimeout(() => switchMode('auth'), 2000);
+        setLoading('btnReset', false);
+      } catch (e) {
+        setLoading('btnReset', false);
+        showMessage('Ошибка: ссылка недействительна или устарела', 'error');
+      }
+    }
+
     function init() {
       const storedTheme = localStorage.getItem('paycontrol_theme') || 'dark';
       document.documentElement.setAttribute('data-theme', storedTheme);
 
       if (pb.authStore.isValid) {
         window.location.href = 'index.html';
+        return;
+      }
+
+      // Если в URL есть параметр token — показываем режим сброса пароля
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('token')) {
+        switchMode('reset');
       }
     }
 
