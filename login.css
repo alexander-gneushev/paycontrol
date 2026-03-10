@@ -53,7 +53,7 @@
 /* Вкладки "Войти" / "Регистрация" */
 .auth-tabs {
   display: flex;
-  background: var(--bg-secondary, #1a1a2e);
+  background: var(--bg-elevated-soft); /* берём из переменных темы — тёмная/светлая автоматически */
   border-radius: 10px;
   padding: 4px;
   margin-bottom: 28px;
@@ -65,7 +65,7 @@
   padding: 10px;
   border: none;
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-muted); /* используем переменную темы вместо захардкоженного цвета */
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
