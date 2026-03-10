@@ -1,7 +1,7 @@
 // Service Worker для PayControl PWA
 // Версия кэша — при обновлении файлов меняй эту строку,
 // чтобы браузер скачал свежие файлы вместо старых из кэша.
-const CACHE_NAME = 'paycontrol-v1';
+const CACHE_NAME = 'paycontrol-v2';
 
 // Список файлов которые кэшируются при установке приложения.
 // Это все статические ресурсы — HTML, CSS, JS, иконки.
@@ -22,10 +22,28 @@ const STATIC_FILES = [
 // Событие install — срабатывает один раз когда браузер устанавливает сервис-воркер.
 // Здесь мы скачиваем и сохраняем все статические файлы в кэш.
 self.addEventListener('install', event => {
+  console.log('[SW] install: начало, версия кэша =', CACHE_NAME);
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(STATIC_FILES))
-      .then(() => self.skipWaiting()) // Активируем сразу, не ждём закрытия старых вкладок
+    caches.open(CACHE_NAME).then(cache => {
+      // Кешируем каждый файл по отдельности — так одна ошибка не убьёт весь процесс
+      return Promise.all(
+        STATIC_FILES.map(url =>
+          fetch(url).then(response => {
+            if (!response.ok) {
+              console.error('[SW] ОШИБКА: не удалось загрузить', url, '— статус:', response.status);
+              return;
+            }
+            console.log('[SW] закешировано:', url);
+            return cache.put(url, response);
+          }).catch(err => {
+            console.error('[SW] ИСКЛЮЧЕНИЕ при загрузке', url, err);
+          })
+        )
+      );
+    }).then(() => {
+      console.log('[SW] install: завершено, вызываем skipWaiting');
+      return self.skipWaiting();
+    })
   );
 });
 
