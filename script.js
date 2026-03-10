@@ -39,12 +39,18 @@
     formMobile.reset();
   });
 
-  addPaymentModalClose.addEventListener('click', () => {
+  function closeMobileModal() {
     addPaymentModal.classList.remove('active');
-  });
+    // Сбрасываем заголовок и кнопку обратно в режим добавления
+    addPaymentModal.querySelector('.modal-title').textContent = 'Добавить платёж';
+    formMobile.querySelector('button[type="submit"]').textContent = 'Сохранить платёж';
+    currentEditingId = null;
+  }
+
+  addPaymentModalClose.addEventListener('click', closeMobileModal);
 
   addPaymentModal.addEventListener('click', (e) => {
-    if (e.target === addPaymentModal) addPaymentModal.classList.remove('active');
+    if (e.target === addPaymentModal) closeMobileModal();
   });
 
   // Обработчик мобильной формы — логика та же что и у десктопной,
@@ -62,10 +68,20 @@
       return;
     }
 
-    const newPayment = await savePayment({ name, amount, date, category });
-    if (newPayment) {
-      await loadPayments();
-      addPaymentModal.classList.remove('active');
+    if (currentEditingId) {
+      // Режим редактирования — обновляем существующий платёж
+      const updated = await updatePayment(currentEditingId, { name, amount, date, category });
+      if (updated) {
+        await loadPayments();
+        closeMobileModal();
+      }
+    } else {
+      // Режим добавления — создаём новый платёж
+      const newPayment = await savePayment({ name, amount, date, category });
+      if (newPayment) {
+        await loadPayments();
+        closeMobileModal();
+      }
     }
   });
 
@@ -377,13 +393,34 @@
         editBtn.title = 'Редактировать платёж';
         editBtn.textContent = '✏️';
         editBtn.addEventListener('click', async () => {
-          currentEditingId = payment.id;
-          form.name.value = payment.name;
-          form.amount.value = payment.amount;
-          form.date.value = payment.date;
-          form.category.value = payment.category;
-          submitBtn.textContent = 'Сохранить изменения';
-          form.name.focus();
+          // Обрезаем дату до yyyy-MM-dd — Pocketbase возвращает '2026-03-10 00:00:00.000Z',
+          // а input[type=date] принимает только 'yyyy-MM-dd'
+          const dateForInput = (payment.date || '').slice(0, 10);
+
+          // Определяем — мобильный режим (модалка видна) или десктоп
+          const isMobile = window.innerWidth <= 879;
+
+          if (isMobile) {
+            // На мобильных: заполняем мобильную форму и открываем модалку
+            formMobile.elements['name'].value = payment.name;
+            formMobile.elements['amount'].value = payment.amount;
+            formMobile.elements['date'].value = dateForInput;
+            formMobile.elements['category'].value = payment.category;
+            // Меняем заголовок модалки и текст кнопки на режим редактирования
+            addPaymentModal.querySelector('.modal-title').textContent = 'Редактировать платёж';
+            formMobile.querySelector('button[type="submit"]').textContent = 'Сохранить изменения';
+            currentEditingId = payment.id;
+            addPaymentModal.classList.add('active');
+          } else {
+            // На десктопе: заполняем десктопную форму
+            currentEditingId = payment.id;
+            form.name.value = payment.name;
+            form.amount.value = payment.amount;
+            form.date.value = dateForInput;
+            form.category.value = payment.category;
+            submitBtn.textContent = 'Сохранить изменения';
+            form.name.focus();
+          }
         });
 
         const paidBtn = document.createElement('button');

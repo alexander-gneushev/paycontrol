@@ -592,6 +592,8 @@ input[type='date']::-webkit-calendar-picker-indicator {
   }
 
   input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(1); /* белая иконка на тёмном фоне — без этого невидима в PWA */
+    cursor: pointer;
     width: 16px;
     height: 16px;
     position: absolute;
