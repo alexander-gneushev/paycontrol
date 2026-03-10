@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PayControl — Трекер личных платежей</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#6366f1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PayControl" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.0/dist/pocketbase.umd.js"></script>
 </head>
@@ -239,5 +245,16 @@
   </div>
 
   <script src="script.js"></script>
+  <script>
+    // Регистрация Service Worker — это то что превращает сайт в PWA.
+    // serviceWorker доступен только в браузерах которые поддерживают PWA (все современные).
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('Service Worker зарегистрирован:', reg.scope))
+          .catch(err => console.error('Ошибка регистрации Service Worker:', err));
+      });
+    }
+  </script>
 </body>
 </html>
