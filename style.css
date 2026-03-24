@@ -1284,3 +1284,179 @@ input[type='date']::-webkit-calendar-picker-indicator {
   from { transform: translateX(0); opacity: 1; }
   to { transform: translateX(100%); opacity: 0; }
 }
+/* ============================================================
+   Секции уведомлений в модалке (Push + Telegram)
+   ============================================================ */
+
+.notify-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.notify-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.notify-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notify-section-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.notify-section-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+[data-theme='light'] .notify-section-desc {
+  color: #4b5563;
+}
+
+/* ── Разделитель "или" между секциями ── */
+.notify-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-soft);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.notify-divider::before,
+.notify-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+/* ============================================================
+   Push-свитч
+   ============================================================
+   Свитч — это стилизованная кнопка. Внутри — "большой палец" (thumb),
+   который скользит влево/вправо в зависимости от состояния.
+   Состояние хранится в aria-checked и классе .active на кнопке.
+   ============================================================ */
+
+.push-toggle {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(148, 163, 184, 0.25);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition), box-shadow var(--transition);
+  padding: 0;
+}
+
+.push-toggle:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
+
+/* Активное состояние — включён */
+.push-toggle.active {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.push-toggle.active:hover {
+  background: color-mix(in srgb, var(--accent) 85%, white);
+}
+
+/* Задизейбленный свитч — когда браузер не поддерживает Push */
+.push-toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Бегунок свитча */
+.push-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: transform var(--transition);
+  pointer-events: none;
+}
+
+/* Когда включён — thumb едет вправо */
+.push-toggle.active .push-toggle-thumb {
+  transform: translateX(22px);
+}
+
+[data-theme='light'] .push-toggle {
+  background: #d1d5db;
+}
+
+[data-theme='light'] .push-toggle:hover {
+  background: #9ca3af;
+}
+
+[data-theme='light'] .push-toggle.active {
+  background: var(--accent);
+}
+
+/* ============================================================
+   Промо-модалка (предложение включить push)
+   ============================================================ */
+
+/* Компактная модалка — чуть уже стандартной */
+.modal-compact {
+  max-width: 400px;
+}
+
+.push-promo-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0 0 8px;
+  line-height: 1.5;
+}
+
+.push-promo-subtext {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+[data-theme='light'] .push-promo-text {
+  color: #111827;
+}
+
+[data-theme='light'] .push-promo-subtext {
+  color: #4b5563;
+}
+
+.push-promo-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.push-promo-actions .btn {
+  flex: 1;
+  min-width: 140px;
+  justify-content: center;
+}

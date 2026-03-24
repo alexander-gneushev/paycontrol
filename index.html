@@ -25,7 +25,8 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn btn-ghost" id="telegramNotify" type="button">📬 Уведомления в Telegram</button>
+        <!-- Кнопка переименована: теперь открывает общий раздел уведомлений -->
+        <button class="btn btn-ghost" id="telegramNotify" type="button">🔔 Уведомления</button>
         <button class="btn btn-ghost" id="themeToggle" type="button">Тёмная тема</button>
       </div>
     </header>
@@ -51,11 +52,8 @@
           <div class="card-header">
             <span class="card-title">Активные обязательства</span>
           </div>
-          <!-- Табы фильтрации категорий -->
           <div class="category-tabs">
-            <button class="category-tab active" data-category="all">
-              Все
-            </button>
+            <button class="category-tab active" data-category="all">Все</button>
             <button class="category-tab" data-category="subscription">
               Подписки <span class="tab-count" id="countSubscription">0</span>
             </button>
@@ -73,7 +71,6 @@
       </section>
 
       <section class="layout-two-column">
-        <!-- Форма добавления — скрыта на мобильных, видна на десктопе -->
         <section class="card form-card" id="formCard">
           <div class="card-header">
             <span class="card-title">Добавить новый платёж</span>
@@ -83,17 +80,14 @@
               <label for="name">Название</label>
               <input id="name" name="name" type="text" placeholder="Например, Spotify, аренда" required />
             </div>
-
             <div class="form-row">
               <label for="amount">Сумма, ₽</label>
               <input id="amount" name="amount" type="number" min="0" step="0.01" placeholder="0.00" required />
             </div>
-
             <div class="form-row">
               <label for="date">Дата списания</label>
               <input id="date" name="date" type="date" required />
             </div>
-
             <div class="form-row">
               <label for="category">Категория</label>
               <select id="category" name="category" required>
@@ -103,7 +97,6 @@
                 <option value="other">Другое</option>
               </select>
             </div>
-
             <div class="form-actions">
               <button class="btn btn-primary" type="submit">Добавить платёж</button>
               <button class="btn btn-ghost" type="reset">Очистить</button>
@@ -115,17 +108,10 @@
           <div class="card-header table-header">
             <span class="card-title">Список платежей</span>
             <div class="table-actions">
-              <!-- Кнопка "+" — видна только на мобильных -->
               <button class="btn btn-primary add-payment-mobile-btn" id="addPaymentMobileBtn" type="button">+</button>
-              <input
-                type="search"
-                id="searchInput"
-                class="search-input"
-                placeholder="Поиск..."
-              />
+              <input type="search" id="searchInput" class="search-input" placeholder="Поиск..." />
             </div>
           </div>
-
           <div class="table-wrapper" id="tableWrapper">
             <table class="payments-table">
               <thead>
@@ -137,9 +123,7 @@
                   <th></th>
                 </tr>
               </thead>
-              <tbody id="paymentsBody">
-                <!-- Записи будут добавляться скриптом -->
-              </tbody>
+              <tbody id="paymentsBody"></tbody>
             </table>
             <div class="table-empty" id="tableEmptyState">
               Платежей пока нет. Добавьте первый с помощью формы слева.
@@ -193,11 +177,13 @@
     </div>
   </div>
 
-  <!-- Модальное окно настройки Telegram-уведомлений -->
+  <!-- ============================================================
+       Модальное окно уведомлений (Telegram + Push)
+       ============================================================ -->
   <div class="modal-overlay" id="telegramModal">
     <div class="modal">
       <div class="modal-header">
-        <span class="modal-title">📬 Уведомления в Telegram</span>
+        <span class="modal-title">🔔 Уведомления</span>
         <button class="modal-close" id="telegramModalClose" type="button">&times;</button>
       </div>
       <div class="modal-body">
@@ -207,47 +193,113 @@
           Уведомления о предстоящих платежах приходят в 7:00 по МСК
         </div>
 
-        <div class="modal-step">
-          <div class="modal-step-num">1</div>
-          <div>
-            <strong>Найдите бота в Telegram</strong>
-            <p>Откройте Telegram и напишите боту любое сообщение:</p>
-            <a class="modal-tg-link" href="https://t.me/paycontrol_alex_bot" target="_blank">@paycontrol_alex_bot</a>
-          </div>
-        </div>
-
-        <div class="modal-step">
-          <div class="modal-step-num">2</div>
-          <div>
-            <strong>Узнайте свой Telegram ID</strong>
-            <p>Напишите боту <code>@userinfobot</code> любое сообщение — он ответит вашим ID. Скопируйте число из поля «ID».</p>
-            <a class="modal-tg-link" href="https://t.me/userinfobot" target="_blank">@userinfobot</a>
-          </div>
-        </div>
-
-        <div class="modal-step">
-          <div class="modal-step-num">3</div>
-          <div style="width:100%">
-            <strong>Введите ваш Telegram ID</strong>
-            <div class="modal-input-row">
-              <div class="input-wrap">
-                <input type="number" id="telegramChatIdInput" placeholder="Например, 250941181" />
-                <button class="icon-btn" id="editTelegramId" type="button" title="Редактировать" style="display:none">✏️</button>
-              </div>
-              <button class="btn btn-primary" id="saveTelegramId" type="button">Сохранить</button>
+        <!-- ── Секция Push-уведомлений ── -->
+        <!-- Эта секция идёт первой — она проще для пользователя:
+             один клик без лишних шагов, работает в любом браузере. -->
+        <div class="notify-section">
+          <div class="notify-section-header">
+            <div class="notify-section-title">
+              <span class="notify-section-icon">📲</span>
+              <span>Push-уведомления</span>
             </div>
-            <div class="modal-status" id="telegramStatus"></div>
+            <!-- Свитч включения/отключения.
+                 aria-checked и role="switch" — для доступности (screen readers).
+                 Визуальное состояние управляется классом active через JS. -->
+            <button
+              class="push-toggle"
+              id="pushToggle"
+              type="button"
+              role="switch"
+              aria-checked="false"
+              title="Включить/отключить push-уведомления"
+            >
+              <span class="push-toggle-thumb"></span>
+            </button>
           </div>
+          <p class="notify-section-desc" id="pushStatusText">
+            Уведомления прямо в браузере — без Telegram и без лишних шагов
+          </p>
         </div>
 
+        <!-- ── Разделитель ── -->
+        <div class="notify-divider">
+          <span>или</span>
+        </div>
+
+        <!-- ── Секция Telegram ── -->
+        <div class="notify-section">
+          <div class="notify-section-header">
+            <div class="notify-section-title">
+              <span class="notify-section-icon">✈️</span>
+              <span>Telegram</span>
+            </div>
+          </div>
+
+          <div class="modal-step">
+            <div class="modal-step-num">1</div>
+            <div>
+              <strong>Найдите бота в Telegram</strong>
+              <p>Откройте Telegram и напишите боту любое сообщение:</p>
+              <a class="modal-tg-link" href="https://t.me/paycontrol_alex_bot" target="_blank">@paycontrol_alex_bot</a>
+            </div>
+          </div>
+
+          <div class="modal-step">
+            <div class="modal-step-num">2</div>
+            <div>
+              <strong>Узнайте свой Telegram ID</strong>
+              <p>Напишите боту <code>@userinfobot</code> любое сообщение — он ответит вашим ID. Скопируйте число из поля «ID».</p>
+              <a class="modal-tg-link" href="https://t.me/userinfobot" target="_blank">@userinfobot</a>
+            </div>
+          </div>
+
+          <div class="modal-step">
+            <div class="modal-step-num">3</div>
+            <div style="width:100%">
+              <strong>Введите ваш Telegram ID</strong>
+              <div class="modal-input-row">
+                <div class="input-wrap">
+                  <input type="number" id="telegramChatIdInput" placeholder="Например, 250941181" />
+                  <button class="icon-btn" id="editTelegramId" type="button" title="Редактировать" style="display:none">✏️</button>
+                </div>
+                <button class="btn btn-primary" id="saveTelegramId" type="button">Сохранить</button>
+              </div>
+              <div class="modal-status" id="telegramStatus"></div>
+            </div>
+          </div>
+
+        </div><!-- /notify-section telegram -->
+      </div><!-- /modal-body -->
+    </div><!-- /modal -->
+  </div><!-- /telegramModal -->
+
+  <!-- ============================================================
+       Модальное окно-предложение включить Push
+       Показывается автоматически после добавления первого платежа
+       ============================================================ -->
+  <div class="modal-overlay" id="pushPromoModal">
+    <div class="modal modal-compact">
+      <div class="modal-header">
+        <span class="modal-title">📲 Включить уведомления?</span>
+        <button class="modal-close" id="pushPromoClose" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="push-promo-text">
+          Платёж добавлен! Хотите получать напоминания о предстоящих платежах прямо в браузере?
+        </p>
+        <p class="push-promo-subtext">
+          Уведомления приходят каждый день в 7:00 по МСК — даже если PayControl закрыт.
+        </p>
+        <div class="push-promo-actions">
+          <button class="btn btn-primary" id="pushPromoEnable" type="button">Включить уведомления</button>
+          <button class="btn btn-ghost" id="pushPromoSkip" type="button">Не сейчас</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script src="script.js"></script>
   <script>
-    // Регистрация Service Worker — это то что превращает сайт в PWA.
-    // serviceWorker доступен только в браузерах которые поддерживают PWA (все современные).
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js')
